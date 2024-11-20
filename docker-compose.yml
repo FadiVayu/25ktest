@@ -63,6 +63,7 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
+      - MODE=events
     depends_on:
       - redpanda-0
   app2:
@@ -71,70 +72,16 @@ services:
       - "3001:3001"
     environment:
       - NODE_ENV=production
+      - MODE=events
     depends_on:
       - redpanda-0
-  app3:
-    image: 25ktest:latest
-    ports:
-      - "3002:3002"
-    environment:
-      - NODE_ENV=production
-    depends_on:
-      - redpanda-0
-  app4:
-    image: 25ktest:latest
-    ports:
-      - "3003:3003"
-    environment:
-      - NODE_ENV=production
-    depends_on:
-      - redpanda-0
-  app5:
-    image: 25ktest:latest
-    ports:
-      - "3004:3004"
-    environment:
-      - NODE_ENV=production
-    depends_on:
-      - redpanda-0
-  app6:
-    image: 25ktest:latest
-    ports:
-      - "3005:3005"
-    environment:
-      - NODE_ENV=production
-    depends_on:
-      - redpanda-0
-  app7:
-    image: 25ktest:latest
-    ports:
-      - "3006:3006"
-    environment:
-      - NODE_ENV=production
-    depends_on:
-      - redpanda-0
-  app8:
-    image: 25ktest:latest
-    ports:
-      - "3007:3007"
-    environment:
-      - NODE_ENV=production
-    depends_on:
-      - redpanda-0
-  app9:
-    image: 25ktest:latest
-    ports:
-      - "3008:3008"
-    environment:
-      - NODE_ENV=production
-    depends_on:
-      - redpanda-0
-  app10:
+  calculate:
     image: 25ktest:latest
     ports:
       - "3009:3009"
     environment:
       - NODE_ENV=production
+      - MODE=worker
     depends_on:
       - redpanda-0
 

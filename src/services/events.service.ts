@@ -33,7 +33,7 @@ export class EventsService {
     customerId: ObjectId
   ): Promise<Record<string, number>> {
     const eventTotals = await this.collection
-      .aggregate([
+      .aggregate<{ _id: ObjectId, total: { $sum: number } }>([
         {
           $match: {
             customerId,
@@ -53,7 +53,7 @@ export class EventsService {
     const results: Record<string, number> = {}
 
     for (const total of eventTotals) {
-      results[total._id.toHexString()] = total.total
+      results[total._id.toHexString()] = total.total.$sum
     }
 
     return results

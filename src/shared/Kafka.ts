@@ -25,7 +25,9 @@ export class Kafka {
 
     this.producer = this.client.producer()
     await this.producer.connect()
+  }
 
+  public static async start() {
     await this.restartConsumer()
 
     this.pollForNewTopics()

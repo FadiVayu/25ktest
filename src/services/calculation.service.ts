@@ -8,6 +8,36 @@ import { EventsService } from './events.service'
 
 type InvoiceProduct = Invoice['products'][number]
 export class CalculationService {
+  private static _intervalId: NodeJS.Timeout | null = null
+  private static _instance: CalculationService | null = null
+  public static get instance() {
+    if (!CalculationService._instance) {
+      CalculationService._instance = new CalculationService()
+    }
+
+    return CalculationService._instance
+  }
+
+  public static startCron() {
+    if (this._intervalId) {
+      clearInterval(this._intervalId)
+    }
+
+    this._intervalId = setInterval(async () => {
+      try {
+        const cachedInvoiceIdsToCalc = await Redis.get('invoices:to-calculate')
+        if (!cachedInvoiceIdsToCalc) return
+
+        const invoiceIdsToCalc = JSON.parse(cachedInvoiceIdsToCalc) as string[]
+        for (const invoice of invoiceIdsToCalc) {
+          await this.instance.calculateInvoiceTotal(invoice)
+        }
+      } catch (error) {
+        console.error('Error calculating invoice totals:', error)
+      }
+    }, 100)
+  }
+
   private productsService: ProductsService
   private invoicesService: InvoicesService
   private eventsService: EventsService
@@ -26,8 +56,8 @@ export class CalculationService {
     return Mongo.db.collection<Event>('event')
   }
 
-  public async calculateInvoiceTotal(invoiceId: ObjectId) {
-    const invoice = await this.invoicesCollection.findOne({ _id: invoiceId })
+  public async calculateInvoiceTotal(invoiceId: ObjectId | string) {
+    const invoice = await this.invoicesCollection.findOne({ _id: new ObjectId(invoiceId) })
     if (!invoice) {
       throw new Error('Invoice not found')
     }

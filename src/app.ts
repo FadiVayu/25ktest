@@ -6,6 +6,7 @@ import bodyParser from 'body-parser'
 import { errorMiddleware, unknownMiddleware } from './middlewares'
 import { logger, Kafka, Mongo, Redis } from './shared'
 import { traceMiddleware } from './middlewares'
+import { CalculationService } from './services/calculation.service'
 
 dotenv.config()
 
@@ -34,6 +35,10 @@ async function startAPI() {
     })
 }
 
+async function startEvents() {
+    await Kafka.start()
+}
+
 async function main() {
     try {
         switch (config.MODE) {
@@ -41,8 +46,13 @@ async function main() {
                 await initDependencies()
                 await startAPI()
                 break
+            case 'events':
+                await initDependencies()
+                await startEvents()
+                break
             case 'worker':
                 await initDependencies()
+                await CalculationService.startCron()
             default:
                 throw new Error('Invalid mode')
         }
