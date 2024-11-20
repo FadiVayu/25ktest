@@ -1,4 +1,6 @@
 import dotenv from 'dotenv'
+dotenv.config()
+
 import express, { Express, Request, Response, NextFunction } from 'express'
 import { config } from './config'
 import { RegisterRoutes } from './routes'
@@ -8,7 +10,6 @@ import { logger, Kafka, Mongo, Redis } from './shared'
 import { traceMiddleware } from './middlewares'
 import { CalculationService } from './services/calculation.service'
 
-dotenv.config()
 
 async function initDependencies() {
     await Promise.all([
@@ -53,6 +54,7 @@ async function main() {
             case 'worker':
                 await initDependencies()
                 await CalculationService.startCron()
+                break
             default:
                 throw new Error('Invalid mode')
         }

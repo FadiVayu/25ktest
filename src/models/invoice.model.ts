@@ -17,7 +17,8 @@ export class Invoice extends MongoEntity {
   }
 
   constructor(obj: Partial<Invoice>) {
-    super(obj)
-    Object.assign(this, obj)
+    super()
+    this.assign(obj)
+    this._id = new ObjectId(this._id)
   }
 }

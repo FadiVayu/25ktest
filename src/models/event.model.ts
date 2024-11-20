@@ -11,8 +11,8 @@ export class Event extends MongoEntity {
   public ref!: string
 
   constructor(obj: Partial<Event>) {
-    super(obj)
-    Object.assign(this, obj)
+    super()
+    this.assign(obj)
 
     this.accountId = new ObjectId(obj.accountId)
     this.customerId = new ObjectId(obj.customerId)

@@ -10,8 +10,8 @@ export class Customer extends MongoEntity {
     public metadata!: Record<string, any>
 
     constructor(obj: Partial<Customer>) {
-        super(obj)
-        Object.assign(this, obj)
+        super()
+        this.assign(obj)
 
         this.accountId = new ObjectId(obj.accountId)
         this.aliases = obj.aliases ? uniq([...obj.aliases, this.externalId]) : [this.externalId]

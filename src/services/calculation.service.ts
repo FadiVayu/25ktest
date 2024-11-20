@@ -26,10 +26,12 @@ export class CalculationService {
     this._intervalId = setInterval(async () => {
       try {
         // const cachedInvoiceIdsToCalc = await Redis.get('invoices:to-calculate')
-        const cachedInvoiceIdsToCalc = `['673e04c93238bdbca1662453']`
+        const cachedInvoiceIdsToCalc = JSON.stringify(['673e04c93238bdbca1662453'])
         if (!cachedInvoiceIdsToCalc) return
 
         const invoiceIdsToCalc = JSON.parse(cachedInvoiceIdsToCalc) as string[]
+
+        console.log('Calculating invoice totals:', invoiceIdsToCalc)
         for (const invoice of invoiceIdsToCalc) {
           await this.instance.calculateInvoiceTotal(invoice)
         }
@@ -101,6 +103,8 @@ export class CalculationService {
     product: Product
   ): InvoiceProduct {
     const pricing = product.pricing
+
+    if (!pricing) { return { id: product._id, price: 0, units: 0 } }
 
     let remainingValue = eventsTotal
     let totalAmount = 0

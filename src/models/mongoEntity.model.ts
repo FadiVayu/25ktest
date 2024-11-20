@@ -5,7 +5,7 @@ export class MongoEntity {
     public createdAt!: Date
     public updatedAt!: Date
 
-    constructor(entity: Partial<MongoEntity>) {
+    public assign(entity: Partial<MongoEntity>) {
         Object.assign(this, entity)
         this._id = new ObjectId(entity._id)
         this.createdAt = entity.createdAt ?? new Date()

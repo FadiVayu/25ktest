@@ -22,9 +22,8 @@ export class Product extends MongoEntity {
   public pricing!: Pricing
 
   constructor(obj: Partial<Product>) {
-    super(obj)
-    Object.assign(this, obj)
-
+    super()
+    this.assign(obj)
     this.accountId = new ObjectId(this.accountId)
   }
 }
