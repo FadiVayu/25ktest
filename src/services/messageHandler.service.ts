@@ -25,8 +25,6 @@ export class MessageHandlerService {
       message.eventName
     )
 
-    // return this.eventsService.create()
-
     const event: CreateEventPayload = {
       accountId: customer!.accountId,
       customerId: customer!._id,
@@ -37,16 +35,6 @@ export class MessageHandlerService {
       name: product!.name
     }
 
-    const key = `events.accountId.${event.accountId}.ref.${event.ref}`
-
-    const startedAt = await Redis.get('startedAt')
-    if (!startedAt) {
-      await Redis.set('startedAt', JSON.stringify({ startedAt: new Date() }))
-    }
-
-    await Redis.set(key, JSON.stringify(new Event(event)))
-    await Redis.set('endedAt', JSON.stringify({ endedAt: new Date() }))
-
-    return ''
+    return this.eventsService.create(event)
   }
 }

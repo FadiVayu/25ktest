@@ -25,7 +25,8 @@ export class CalculationService {
 
     this._intervalId = setInterval(async () => {
       try {
-        const cachedInvoiceIdsToCalc = await Redis.get('invoices:to-calculate')
+        // const cachedInvoiceIdsToCalc = await Redis.get('invoices:to-calculate')
+        const cachedInvoiceIdsToCalc = `['673e04c93238bdbca1662453']`
         if (!cachedInvoiceIdsToCalc) return
 
         const invoiceIdsToCalc = JSON.parse(cachedInvoiceIdsToCalc) as string[]
