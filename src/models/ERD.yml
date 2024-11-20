@@ -1,0 +1,33 @@
+- CRUD Customer
+  - aliases
+  - name
+  - email
+  - accountId
+  - settings
+
+- CRUD Plan ( aka contract ) + revisioning id
+  - name
+  - description
+  - customerId
+  - accountId
+  - meters[]
+
+- CRUD CatalogProduct 
+  - meter template
+  - name
+  - description
+  - accountId
+  - aggregation
+  - filter
+
+- CRUD Invoice
+  - revunebreakdown []
+  - customerId
+  - accountId
+  - planId
+  - billing period
+  - status
+  - metadata
+
+- INGEST events
+ - already done 
