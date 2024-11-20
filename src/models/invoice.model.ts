@@ -5,14 +5,12 @@ export class Invoice extends MongoEntity {
   public name!: string
   public accountId!: ObjectId
   public customerId!: ObjectId
-  public priceBreakdown!: {
+  public priceBreakdown!: number
+  public products!: {
+    id: ObjectId
+    price: number
     units: number
-    total: number
-    tax: number
-    subtotal: number
-    commitment: number
-  }
-  public productsIds!: ObjectId[]
+  }[]
   public billingPeriod!: {
     startTime: Date
     endTime: Date

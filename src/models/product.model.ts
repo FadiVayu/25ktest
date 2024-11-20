@@ -12,7 +12,6 @@ type Pricing = {
 
 export interface Aggregation {
   operation: 'sum' | 'average' | 'count' | 'min' | 'max'
-  pricing: Pricing
   field?: string
 }
 
@@ -20,6 +19,7 @@ export class Product extends MongoEntity {
   public name!: string
   public accountId!: ObjectId
   public aggregation!: Aggregation
+  public pricing!: Pricing
 
   constructor(obj: Partial<Product>) {
     super(obj)
