@@ -33,18 +33,18 @@ export class EventsService {
     customerId: ObjectId
   ): Promise<Record<string, number>> {
     const eventTotals = await this.collection
-      .aggregate<{ _id: ObjectId, total: { $sum: number } }>([
+      .aggregate<{ _id: ObjectId, total: number }>([
         {
           $match: {
             customerId,
-            productId: { $in: productsIds },
-            time: { $gte: period.startTime, $lte: period.endTime }
+            meterId: { $in: productsIds },
+            timestamp: { $gte: period.startTime.getTime(), $lte: period.endTime.getTime() }
           }
         },
         {
           $group: {
-            _id: '$productId',
-            total: { $sum: '$value' }
+            _id: '$meterId',
+            total: { $sum: 1 } //todo: value here is incorrect. its in metadata based on the field that the product needs
           }
         }
       ])
@@ -53,7 +53,7 @@ export class EventsService {
     const results: Record<string, number> = {}
 
     for (const total of eventTotals) {
-      results[total._id.toHexString()] = total.total.$sum
+      results[total._id.toHexString()] = total.total
     }
 
     return results

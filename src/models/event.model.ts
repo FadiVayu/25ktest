@@ -7,7 +7,7 @@ export class Event extends MongoEntity {
   public metadata!: Record<string, any>
   public accountId!: ObjectId
   public customerId!: ObjectId
-  public meterId!: ObjectId
+  public productId!: ObjectId
   public ref!: string
 
   constructor(obj: Partial<Event>) {
@@ -16,14 +16,14 @@ export class Event extends MongoEntity {
 
     this.accountId = new ObjectId(obj.accountId)
     this.customerId = new ObjectId(obj.customerId)
-    this.meterId = new ObjectId(obj.meterId)
+    this.productId = new ObjectId(obj.productId)
   }
 }
 
 export interface CreateEventPayload {
   accountId: ObjectId
   customerId: ObjectId
-  meterId: ObjectId
+  productId: ObjectId
   ref: string
   timestamp: number
   metadata: Record<string, any>

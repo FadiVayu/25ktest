@@ -28,7 +28,7 @@ export class MessageHandlerService {
     const event: CreateEventPayload = {
       accountId: customer!.accountId,
       customerId: customer!._id,
-      meterId: product!._id,
+      productId: product!._id,
       ref: message.ref,
       timestamp: message.timestamp,
       metadata: message.data,
