@@ -11,7 +11,7 @@ type Pricing = {
 }
 
 export interface Aggregation {
-  operation: 'sum' | 'average' | 'count' | 'min' | 'max'
+  type: 'sum' | 'average' | 'count' | 'min' | 'max'
   field?: string
 }
 

@@ -1,6 +1,6 @@
 import { MongoClient, Db } from 'mongodb'
 import { config } from '../config'
-import { Customer } from '../models'
+import { Event, Customer, Product, Invoice } from '../models'
 
 export class Mongo {
   public static client: MongoClient
@@ -50,5 +50,21 @@ export class Mongo {
     this.db = this.client.db(config.MONGO.db)
 
     await this.createIndexes()
+  }
+
+  public static get events() {
+    return this.db.collection<Event>('events')
+  }
+
+  public static get customers() {
+    return this.db.collection<Customer>('customers')
+  }
+
+  public static get products() {
+    return this.db.collection<Product>('products')
+  }
+
+  public static get invoices() {
+    return this.db.collection<Invoice>('invoices')
   }
 }

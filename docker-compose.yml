@@ -75,15 +75,15 @@ services:
       - MODE=events
     depends_on:
       - redpanda-0
-  calculate:
-    image: 25ktest:latest
-    ports:
-      - "3009:3009"
-    environment:
-      - NODE_ENV=production
-      - MODE=worker
-    depends_on:
-      - redpanda-0
+  # calculate:
+  #   image: 25ktest:latest
+  #   ports:
+  #     - "3009:3009"
+  #   environment:
+  #     - NODE_ENV=production
+  #     - MODE=worker
+  #   depends_on:
+  #     - redpanda-0
 
 volumes:
   mongodb_data:

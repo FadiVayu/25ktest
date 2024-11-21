@@ -10,7 +10,7 @@ const run = async () => {
   await producer.connect()
 
   let count = 0
-  for (let j = 0; j < 100; j++) {
+  for (let product = 0; product < 100; product++) {
     const messages: any[] = []
     for (let i = 0; i < 1000; i++) {
       messages.push({
@@ -23,9 +23,9 @@ const run = async () => {
             someField: 'not',
             valueField: 12334
           },
-          ref: `some-ref-${i}-${j}`,
-          customerAlias: `customer-${j % 10}`,
-          eventName: `Meter ${j}`
+          ref: `some-ref-${i}-${product}-${Date.now()}`,
+          customerAlias: `customer-${i % 10}`,
+          eventName: `Meter ${product}`
         })
       })
     }

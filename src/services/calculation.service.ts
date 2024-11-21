@@ -5,8 +5,8 @@ import { ProductsService } from './products.service'
 import { sumBy, update } from 'lodash'
 import { InvoicesService } from './invoices.service'
 import { EventsService } from './events.service'
+import { CalculationUtils, InvoiceProduct } from '../utils'
 
-type InvoiceProduct = Invoice['products'][number]
 export class CalculationService {
   private static _intervalId: NodeJS.Timeout | null = null
   private static _instance: CalculationService | null = null
@@ -43,24 +43,14 @@ export class CalculationService {
 
   private productsService: ProductsService
   private invoicesService: InvoicesService
-  private eventsService: EventsService
 
   public constructor() {
     this.productsService = new ProductsService()
     this.invoicesService = new InvoicesService()
-    this.eventsService = new EventsService()
-  }
-
-  public get invoicesCollection() {
-    return Mongo.db.collection<Invoice>('invoices')
-  }
-
-  public get eventsCollection() {
-    return Mongo.db.collection<Event>('event')
   }
 
   public async calculateInvoiceTotal(invoiceId: ObjectId | string) {
-    const invoice = await this.invoicesCollection.findOne({ _id: new ObjectId(invoiceId) })
+    const invoice = await this.invoicesService.get(invoiceId)
     if (!invoice) {
       throw new Error('Invoice not found')
     }
@@ -72,7 +62,12 @@ export class CalculationService {
       invoice.accountId,
       productsIds
     )
-    const eventsTotalsById = await this.eventsService.readEventsTotals(
+
+    if (!products) {
+      throw new Error('Products not found')
+    }
+
+    const eventsTotalsById = await this.readEventsTotals(
       calculationPeriod,
       productsIds,
       invoice.customerId
@@ -82,7 +77,7 @@ export class CalculationService {
 
     for (const product of products) {
       const eventsTotal = eventsTotalsById[product._id.toHexString()]
-      const calculatedProduct = this.calculateProduct(eventsTotal, product)
+      const calculatedProduct = CalculationUtils.calculateProduct(eventsTotal, product)
 
       calculatedProductMap.set(product._id, calculatedProduct)
     }
@@ -98,31 +93,54 @@ export class CalculationService {
     return updatedInvoice
   }
 
-  private calculateProduct(
-    eventsTotal: number,
-    product: Product
-  ): InvoiceProduct {
-    const pricing = product.pricing
+  
+  private async readEventsTotals(
+    period: { startTime: Date; endTime: Date },
+    productsIds: ObjectId[],
+    customerId: ObjectId
+  ): Promise<Record<string, number>> {
+    const eventTotals = await Mongo.events.find({
+      customerId,
+      productId: { $in: productsIds },
+      timestamp: { $gte: period.startTime.getTime(), $lte: period.endTime.getTime() }
+    }, { batchSize: 1000 })
 
-    if (!pricing) { return { id: product._id, price: 0, units: 0 } }
 
-    let remainingValue = eventsTotal
-    let totalAmount = 0
-
-    for (const { from, to, price, chunkSize } of pricing.tiers) {
-      if (remainingValue <= 0) break
-
-      const applicableValue = Math.min(remainingValue, to - from + 1)
-      const fullChunks = Math.ceil(applicableValue / chunkSize)
-
-      totalAmount += fullChunks * price
-      remainingValue -= applicableValue
+    const results: Record<string, number> = {}
+    for (const productId of productsIds) {
+      results[productId.toHexString()] = 0
     }
 
-    return {
-      id: product._id,
-      price: totalAmount,
-      units: eventsTotal
+    const MAX_BATCH_SIZE = 1000
+    let batch = []
+
+    const findEventValue = async (event: Event) => {
+      const product = await this.productsService.getById(event.accountId, event.productId)
+      if (!product) {
+        return 0
+      }
+
+      results[event.productId.toHexString()] = CalculationUtils.calculateEventValue(event, product.aggregation.type, product.aggregation.field)
     }
+
+    while (await eventTotals.hasNext()) {
+      const event = await eventTotals.next()
+
+      if (!event) { continue; }
+
+      batch.push(findEventValue(event))
+
+      if (batch.length === MAX_BATCH_SIZE) {
+        await Promise.all(batch)
+        batch = []
+      }
+    }
+
+    if (batch.length) {
+      await Promise.all(batch)
+    }
+
+    return results
   }
+
 }

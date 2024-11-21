@@ -1,30 +1,42 @@
 import { ObjectId } from 'mongodb'
 import { Invoice } from '../models'
-import { Mongo } from '../shared'
+import { Mongo, Redis } from '../shared'
 
 export class InvoicesService {
-  public get collection() {
-    return Mongo.db.collection<Invoice>('invoices')
-  }
+  public async get(id: ObjectId | string): Promise<Invoice | null> {
+    const key = `invoices.id.${id}`
+    const cached = await Redis.get(key, (data) => new Invoice(data))
 
-  public async get(id: string): Promise<Invoice | null> {
-    const result = await this.collection.findOne({
+    if (cached) {
+      return cached
+    }
+
+    const result = await Mongo.invoices.findOne({
       _id: new ObjectId(id)
     })
 
-    return result ? new Invoice(result) : null
+    if (!result) {
+      return null
+    }
+
+    const invoice = new Invoice(result)
+    await Redis.set(key, invoice)
+
+    return invoice
   }
 
   public async update(
     id: string | ObjectId,
     invoice: Partial<Invoice>
   ): Promise<Invoice | null> {
-    const result = await this.collection.findOneAndUpdate(
+    const key = `invoices.id.${id}`
+    const result = await Mongo.invoices.findOneAndUpdate(
       { _id: new ObjectId(id) },
       { $set: invoice },
       { returnDocument: 'after' }
     )
 
+    await Redis.invalidate(key)
     return result ? new Invoice(result) : null
   }
 }

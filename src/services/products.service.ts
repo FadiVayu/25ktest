@@ -3,64 +3,64 @@ import { Product } from "../models";
 import { Mongo, Redis } from "../shared";
 
 export class ProductsService {
-    public get collection() {
-        return Mongo.db.collection<Product>('products');
-    }
 
     public async getByName(accountId: ObjectId | string, name: string): Promise<Product | null> {
         const key = `products.accountId.${accountId}.name.${name}`
-        const cached = await Redis.get(key)
+        const cached = await Redis.get(key, (data) => new Product(data))
         if (cached) {
-            return new Product(JSON.parse(cached))
+            return cached
         }
 
-        const result = await this.collection.findOne({
+        const result = await Mongo.products.findOne({
             accountId: new ObjectId(accountId),
             name
         });
 
-        if (result) {
-            await Redis.set(key, JSON.stringify(result))
+        if (!result) {
+            return null
         }
 
-        return result ? new Product(result) : null;
+        await Redis.set(key, result)
+        return new Product(result);
     }
 
     public async getById(accountId: ObjectId | string, id: ObjectId | string): Promise<Product | null> {
         const key = `products.accountId.${accountId}.id.${id}`
-        const cached = await Redis.get(key)
+        const cached = await Redis.get(key, (data) => new Product(data))
         if (cached) {
-            return new Product(JSON.parse(cached))
+            return cached
         }
 
-        const result = await this.collection.findOne({
+        const result = await Mongo.products.findOne({
             accountId: new ObjectId(accountId),
             _id: new ObjectId(id)
         });
 
-        if (result) {
-            await Redis.set(key, JSON.stringify(result))
+        if (!result) {
+            return null
         }
 
-        return result ? new Product(result) : null;
+        await Redis.set(key, result)
+        return new Product(result);
     }
 
-    public async getManyByIds(accountId: ObjectId | string, ids: (ObjectId | string)[]): Promise<Product[]> {
+    public async getManyByIds(accountId: ObjectId | string, ids: (ObjectId | string)[]): Promise<Product[] | null> {
         const key = `products.accountId.${accountId}.ids.${ids.join(',')}`
-        const cached = await Redis.get(key)
+        const cached = await Redis.get<Product[]>(key)
         if (cached) {
-            return JSON.parse(cached).map((product: any) => new Product(product))
+            return cached.map(product => new Product(product))
         }
 
-        const result = await this.collection.find({
+        const result = await Mongo.products.find({
             accountId: new ObjectId(accountId),
             _id: { $in: ids.map(id => new ObjectId(id)) }
         }).toArray();
 
-        if (result) {
-            await Redis.set(key, JSON.stringify(result))
+        if (!result) {
+            return null;
         }
 
+        await Redis.set(key, result)
         return result.map(product => new Product(product));
     }
 }
