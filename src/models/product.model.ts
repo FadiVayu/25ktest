@@ -10,8 +10,16 @@ type Pricing = {
   }[]
 }
 
+export enum AggregationMethods {
+  SUM = 'sum',
+  AVERAGE = 'avg',
+  MAX = 'max',
+  MIN = 'min',
+  COUNT = 'count'
+}
+
 export interface Aggregation {
-  type: 'sum' | 'average' | 'count' | 'min' | 'max'
+  type: AggregationMethods
   field?: string
 }
 
@@ -26,4 +34,11 @@ export class Product extends MongoEntity {
     this.assign(obj)
     this.accountId = new ObjectId(this.accountId)
   }
+}
+
+export interface CreateProductPayload {
+  name: string
+  accountId: ObjectId
+  aggregation: Aggregation
+  pricing: Pricing
 }

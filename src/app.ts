@@ -1,19 +1,18 @@
 import dotenv from 'dotenv'
 dotenv.config()
 
-import express, { Express, Request, Response, NextFunction } from 'express'
+import express, { Express } from 'express'
 import { config } from './config'
 import { RegisterRoutes } from './routes'
 import bodyParser from 'body-parser'
 import { errorMiddleware, unknownMiddleware } from './middlewares'
 import { logger, Kafka, Mongo, Redis } from './shared'
 import { traceMiddleware } from './middlewares'
-import { CalculationService } from './services/calculation.service'
-
+import { CalculationService } from './services'
 
 async function initDependencies() {
     await Promise.all([
-        Mongo.connect(config.MONGO.uri),
+        Mongo.connect(config.MONGO.uri, config.MONGO.db),
         Kafka.connect(config.KAFKA.brokers),
         Redis.connect(config.REDIS.uri)
     ])

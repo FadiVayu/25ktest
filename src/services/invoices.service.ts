@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb'
-import { Invoice } from '../models'
+import { CreateInvoicePayload, Invoice } from '../models'
 import { Mongo, Redis } from '../shared'
 
 export class InvoicesService {
@@ -25,6 +25,12 @@ export class InvoicesService {
     await Redis.set(key, invoice)
 
     return invoice
+  }
+  
+  public async create(invoice: CreateInvoicePayload): Promise<string> {
+    const createdResult = await Mongo.invoices.insertOne(new Invoice(invoice))
+
+    return createdResult.insertedId.toHexString()
   }
 
   public async update(

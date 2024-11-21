@@ -21,25 +21,27 @@ export class CalculationService {
       clearInterval(this._intervalId)
     }
 
-    this._intervalId = setInterval(async () => {
-      try {
-        const lock = await Redis.lock('invoices:to-calculate')
-        const invoiceIdsToCalc = await Redis.get<ObjectId[]>('invoices:to-calculate', (data) => data.map((id) => new ObjectId(id)))
-        await Redis.invalidate('invoices:to-calculate')
-        await lock.release()
-  
-        console.log('Calculating invoice totals:', invoiceIdsToCalc)
-        if (!invoiceIdsToCalc || !invoiceIdsToCalc.length) {
-          return
-        }
+    this._intervalId = setInterval(this.calculateInvoices, 100)
+  }
 
-        for (const invoice of invoiceIdsToCalc) {
-          await this.instance.calculateInvoiceTotal(invoice)
-        }
-      } catch (error) {
-        console.error('Error calculating invoice totals:', error)
+  public static async calculateInvoices() {
+    try {
+      const lock = await Redis.lock('invoices:to-calculate')
+      const invoiceIdsToCalc = await Redis.get<ObjectId[]>('invoices:to-calculate', (data) => data.map((id) => new ObjectId(id)))
+      await Redis.invalidate('invoices:to-calculate')
+      await lock.release()
+
+      console.log('Calculating invoice totals:', invoiceIdsToCalc)
+      if (!invoiceIdsToCalc || !invoiceIdsToCalc.length) {
+        return
       }
-    }, 100)
+
+      for (const invoice of invoiceIdsToCalc) {
+        await this.instance.calculateInvoiceTotal(invoice)
+      }
+    } catch (error) {
+      console.error('Error calculating invoice totals:', error)
+    }
   }
 
   private productsService: ProductsService

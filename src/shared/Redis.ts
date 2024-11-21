@@ -66,9 +66,11 @@ export class Redis {
         return value as unknown as T
     }
 
-
-
     public static async invalidate(key: string): Promise<void> {
         await this.client.del(key)
+    }
+
+    public static async clear(): Promise<void> {
+        await this.client.flushall()
     }
 }

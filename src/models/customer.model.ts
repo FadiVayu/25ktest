@@ -18,3 +18,11 @@ export class Customer extends MongoEntity {
         this.metadata = obj.metadata ?? {}
     }
 }
+
+export interface CreateCustomerPayload {
+    name: string
+    accountId: ObjectId
+    externalId: string
+    metadata?: Record<string, any>
+    aliases?: string[]
+}

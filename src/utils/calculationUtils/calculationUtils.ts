@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { Event, Product } from '../../models'
+import { AggregationMethods, Event, Product } from '../../models'
 import { InvoiceProduct } from './calculationUtils.types';
 import { Mongo } from '../../shared';
 
@@ -73,12 +73,12 @@ export class CalculationUtils {
 
   private static getMongoAggregationOperation(aggregationMethod: string, field?: string) {
     switch (aggregationMethod) {
-      case 'count':
+      case AggregationMethods.COUNT:
         return [
           { $count: "count" },
           { $project: { total: "$count" } }
         ]
-      case 'sum':
+      case AggregationMethods.SUM:
         return [
           {
             $group: {
@@ -92,7 +92,7 @@ export class CalculationUtils {
             }
           }
         ]
-      case 'min':
+      case AggregationMethods.MIN:
         return [
           {
             $group: {
@@ -106,7 +106,7 @@ export class CalculationUtils {
             }
           }
         ]
-      case 'max':
+      case AggregationMethods.MAX:
         return [
           {
             $group: {
@@ -120,7 +120,7 @@ export class CalculationUtils {
             }
           }
         ]
-      case 'average':
+      case AggregationMethods.AVERAGE:
         return [
           {
             $group: {

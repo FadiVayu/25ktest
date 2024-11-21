@@ -1,44 +1,43 @@
-import { MongoClient, Db } from 'mongodb'
+import { MongoClient, Db, CreateIndexesOptions, IndexSpecification } from 'mongodb'
 import { config } from '../config'
 import { Event, Customer, Product, Invoice } from '../models'
+
+type IndexForT<T> = Partial<Record<keyof T, 1 | -1>> & IndexSpecification;
+
 
 export class Mongo {
   public static client: MongoClient
   public static db: Db
 
-  private static async createIndexes(): Promise<void> {
-    const customersCollection = this.db.collection<Customer>('customers')
+  private static async createIndexSafely<T = any>(collection: string, index: IndexForT<T>, options: CreateIndexesOptions): Promise<void> {
+    const collections = await this.db.listCollections({ name: collection }).toArray();
+    
+    if (collections.length === 0) {
+      await this.db.createCollection(collection);
+      console.log(`Collection created: ${collection}`);
+    }
 
-    await customersCollection.createIndex(
-      {
-        accountId: 1,
-        externalId: 1
-      },
-      { unique: true, background: true }
-    )
+    const existingIndexes = await this.db.collection(collection).listIndexes().toArray();
 
-    const eventsCollection = this.db.collection('events')
+    const indexExists = existingIndexes.some((existingIndex) =>
+      JSON.stringify(Object.keys(existingIndex)) === JSON.stringify(Object.keys(index))
+    );
 
-    await eventsCollection.createIndex(
-      {
-        accountId: 1,
-        ref: 1
-      },
-      { unique: true, background: true }
-    )
-
-    const productsCollection = this.db.collection('products')
-
-    await productsCollection.createIndex(
-      {
-        accountId: 1,
-        name: 1
-      },
-      { unique: true, background: true }
-    )
+    if (!indexExists) {
+      await this.db.collection(collection).createIndex(index, options);
+      console.log(`Index created for collection ${collection}:`, index);
+    } else {
+      console.log(`Index already exists for collection ${collection}:`, index);
+    }
   }
 
-  public static async connect(uri: string): Promise<void> {
+  private static async createIndexes(): Promise<void> {
+    await this.createIndexSafely<Customer>('customers', { accountId: 1, externalId: 1 }, { unique: true, background: true });
+    await this.createIndexSafely<Event>('events', { accountId: 1, ref: 1 }, { unique: true, background: true });
+    await this.createIndexSafely<Product>('products', { accountId: 1, name: 1 }, { unique: true, background: true });
+  }
+
+  public static async connect(uri: string, db: string): Promise<void> {
     this.client = new MongoClient(uri)
 
     try {
@@ -47,7 +46,7 @@ export class Mongo {
       throw Error('Unable to connect to the database')
     }
 
-    this.db = this.client.db(config.MONGO.db)
+    this.db = this.client.db(db)
 
     await this.createIndexes()
   }

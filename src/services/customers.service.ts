@@ -1,8 +1,15 @@
 import { ObjectId } from 'mongodb'
-import { Customer } from '../models'
+import { CreateCustomerPayload, Customer } from '../models'
 import { Mongo, Redis } from '../shared'
 
 export class CustomersService {
+
+  public async create(customer: CreateCustomerPayload): Promise<string> {
+    const createdResult = await Mongo.customers.insertOne(new Customer(customer))
+
+    return createdResult.insertedId.toHexString()
+  }
+
 
   public async getByAlias(
     accountId: ObjectId | string,

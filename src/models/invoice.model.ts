@@ -26,3 +26,19 @@ export class Invoice extends MongoEntity {
     }
   }
 }
+
+export interface CreateInvoicePayload {
+  name: string
+  accountId: ObjectId
+  customerId: ObjectId
+  priceBreakdown: number
+  products: {
+    id: ObjectId
+    price: number
+    units: number
+  }[]
+  billingPeriod: {
+    startTime: Date
+    endTime: Date
+  }
+}

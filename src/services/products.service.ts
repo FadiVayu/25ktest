@@ -1,9 +1,16 @@
 import { ObjectId } from "mongodb";
-import { Product } from "../models";
+import { CreateProductPayload, Product } from "../models";
 import { Mongo, Redis } from "../shared";
 import { parse } from "dotenv";
 
 export class ProductsService {
+
+    public async create(product: CreateProductPayload): Promise<string> {
+        const createdResult = await Mongo.products.insertOne(new Product(product))
+
+        return createdResult.insertedId.toHexString()
+    }
+
     public async getByName(accountId: ObjectId | string, name: string): Promise<Product | null> {
         const parsedAccountId = new ObjectId(accountId)
 
