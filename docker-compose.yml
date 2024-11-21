@@ -1,17 +1,20 @@
 version: '3.8'
 services:
+  # MONGO #
   mongo:
     image: mongo:latest
     container_name: mongo
     ports:
       - "27017:27017"
 
+  # REDIS #
   redis:
     image: redis:latest
     container_name: redis
     ports:
       - "6379:6379"
 
+  # RED PANDA / KAFKA #
   redpanda-0:
     command:
       - redpanda
@@ -35,6 +38,7 @@ services:
       - 18082:18082
       - 19092:19092
       - 19644:9644
+  
   console:
     container_name: redpanda-console
     image: docker.redpanda.com/redpandadata/console:v2.7.2
@@ -57,6 +61,7 @@ services:
     depends_on:
       - redpanda-0
 
+  # APPS #
   app:
     image: 25ktest:latest
     ports:
@@ -64,8 +69,12 @@ services:
     environment:
       - NODE_ENV=production
       - MODE=events
+      - MONGO_URI=mongodb://mongo:27017
+      - KAFKA_BROKERS=["redpanda-0:9092"]
+      - REDIS_URI=redis://redis:6379
     depends_on:
       - redpanda-0
+
   app2:
     image: 25ktest:latest
     ports:
@@ -73,8 +82,12 @@ services:
     environment:
       - NODE_ENV=production
       - MODE=events
+      - MONGO_URI=mongodb://mongo:27017
+      - KAFKA_BROKERS=["redpanda-0:9092"]
+      - REDIS_URI=redis://redis:6379
     depends_on:
       - redpanda-0
+  
   # calculate:
   #   image: 25ktest:latest
   #   ports:
@@ -82,6 +95,9 @@ services:
   #   environment:
   #     - NODE_ENV=production
   #     - MODE=worker
+  #     - MONGO_URI=mongodb://mongo:27017
+  #     - KAFKA_BROKERS=["redpanda-0:9092"]
+  #     - REDIS_URI=redis://redis:6379
   #   depends_on:
   #     - redpanda-0
 

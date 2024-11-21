@@ -20,5 +20,9 @@ export class Invoice extends MongoEntity {
     super()
     this.assign(obj)
     this._id = new ObjectId(this._id)
+    this.billingPeriod = {
+      startTime: new Date(this.billingPeriod.startTime),
+      endTime: new Date(this.billingPeriod.endTime)
+    }
   }
 }

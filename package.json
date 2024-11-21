@@ -35,6 +35,7 @@
     "kafkajs": "^2.2.4",
     "lodash": "^4.17.21",
     "mongodb": "^6.6.1",
+    "redlock": "^5.0.0-beta.2",
     "winston": "^3.13.0"
   }
 }

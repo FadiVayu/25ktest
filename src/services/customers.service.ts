@@ -8,14 +8,16 @@ export class CustomersService {
     accountId: ObjectId | string,
     customerAlias: string
   ): Promise<Customer | null> {
-    const key = `customers.accountId.${accountId}.alias.${customerAlias}`
+    const parsedAccountId = new ObjectId(accountId)
+    
+    const key = `customers:${parsedAccountId.toHexString()}.${customerAlias}`
     const cached = await Redis.get<Customer>(key, (data) => new Customer(data))
     if (cached) {
       return cached
     }
 
     const result = await Mongo.customers.findOne({
-      accountId: new ObjectId(accountId),
+      accountId: parsedAccountId,
       aliases: { $in: [customerAlias] }
     })
 

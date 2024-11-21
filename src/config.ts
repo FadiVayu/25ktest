@@ -1,19 +1,14 @@
 export const config = {
   PORT: process.env.PORT || 3000,
   MONGO: {
-    // uri: 'mongodb+srv://v4yu_ma1n_adm1n:fnlXcw57XfNID12e@dev-servereless-cluster.0zlzw3j.mongodb.net',
-    // db: '25k-test',
-    uri: 'mongodb://localhost:27017',
-    // uri: 'mongodb://mongo:27017',
-    db: 'main'
+    uri: process.env.MONGO_URI || 'mongodb://localhost:27017',
+    db: process.env.MONGO_DB || 'main',
   },
   KAFKA: {
-    // brokers: ['redpanda-0:9092']
-    brokers: ['localhost:19092']
+    brokers: JSON.parse(process.env.KAFKA_BROKERS || '["localhost:19092"]'),
   },
   REDIS: {
-    // uri: 'redis://redis:6379'
-    uri: 'redis://localhost:6379'
+    uri: process.env.REDIS_URI || 'redis://localhost:6379',
   },
   MODE: process.env.MODE || 'api'
 }

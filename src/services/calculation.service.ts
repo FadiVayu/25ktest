@@ -1,11 +1,9 @@
 import { ObjectId } from 'mongodb'
-import { Invoice, Event, Product } from '../models'
-import { Mongo, Redis } from '../shared'
+import { Redis } from '../shared'
 import { ProductsService } from './products.service'
-import { sumBy, update } from 'lodash'
+import { sumBy } from 'lodash'
 import { InvoicesService } from './invoices.service'
-import { EventsService } from './events.service'
-import { CalculationUtils, InvoiceProduct } from '../utils'
+import { CalculationUtils } from '../utils'
 
 export class CalculationService {
   private static _intervalId: NodeJS.Timeout | null = null
@@ -25,13 +23,16 @@ export class CalculationService {
 
     this._intervalId = setInterval(async () => {
       try {
-        // const cachedInvoiceIdsToCalc = await Redis.get('invoices:to-calculate')
-        const cachedInvoiceIdsToCalc = JSON.stringify(['673e04c93238bdbca1662453'])
-        if (!cachedInvoiceIdsToCalc) return
-
-        const invoiceIdsToCalc = JSON.parse(cachedInvoiceIdsToCalc) as string[]
-
+        const lock = await Redis.lock('invoices:to-calculate')
+        const invoiceIdsToCalc = await Redis.get<ObjectId[]>('invoices:to-calculate', (data) => data.map((id) => new ObjectId(id)))
+        await Redis.invalidate('invoices:to-calculate')
+        await lock.release()
+  
         console.log('Calculating invoice totals:', invoiceIdsToCalc)
+        if (!invoiceIdsToCalc || !invoiceIdsToCalc.length) {
+          return
+        }
+
         for (const invoice of invoiceIdsToCalc) {
           await this.instance.calculateInvoiceTotal(invoice)
         }
@@ -67,22 +68,8 @@ export class CalculationService {
       throw new Error('Products not found')
     }
 
-    const eventsTotalsById = await this.readEventsTotals(
-      calculationPeriod,
-      productsIds,
-      invoice.customerId
-    )
-
-    const calculatedProductMap = new Map<ObjectId, InvoiceProduct>()
-
-    for (const product of products) {
-      const eventsTotal = eventsTotalsById[product._id.toHexString()]
-      const calculatedProduct = CalculationUtils.calculateProduct(eventsTotal, product)
-
-      calculatedProductMap.set(product._id, calculatedProduct)
-    }
-
-    const invoiceProducts = [...calculatedProductMap.values()]
+    const calculatingProducts = products.map((product) => CalculationUtils.calculateProduct(invoice.customerId, product, calculationPeriod))
+    const invoiceProducts = await Promise.all(calculatingProducts)
     const invoiceTotal = sumBy(invoiceProducts, (product) => product.price)
 
     const updatedInvoice = await this.invoicesService.update(invoiceId, {
@@ -92,55 +79,4 @@ export class CalculationService {
 
     return updatedInvoice
   }
-
-  
-  private async readEventsTotals(
-    period: { startTime: Date; endTime: Date },
-    productsIds: ObjectId[],
-    customerId: ObjectId
-  ): Promise<Record<string, number>> {
-    const eventTotals = await Mongo.events.find({
-      customerId,
-      productId: { $in: productsIds },
-      timestamp: { $gte: period.startTime.getTime(), $lte: period.endTime.getTime() }
-    }, { batchSize: 1000 })
-
-
-    const results: Record<string, number> = {}
-    for (const productId of productsIds) {
-      results[productId.toHexString()] = 0
-    }
-
-    const MAX_BATCH_SIZE = 1000
-    let batch = []
-
-    const findEventValue = async (event: Event) => {
-      const product = await this.productsService.getById(event.accountId, event.productId)
-      if (!product) {
-        return 0
-      }
-
-      results[event.productId.toHexString()] = CalculationUtils.calculateEventValue(event, product.aggregation.type, product.aggregation.field)
-    }
-
-    while (await eventTotals.hasNext()) {
-      const event = await eventTotals.next()
-
-      if (!event) { continue; }
-
-      batch.push(findEventValue(event))
-
-      if (batch.length === MAX_BATCH_SIZE) {
-        await Promise.all(batch)
-        batch = []
-      }
-    }
-
-    if (batch.length) {
-      await Promise.all(batch)
-    }
-
-    return results
-  }
-
 }

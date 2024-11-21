@@ -1,18 +1,20 @@
 import { ObjectId } from "mongodb";
 import { Product } from "../models";
 import { Mongo, Redis } from "../shared";
+import { parse } from "dotenv";
 
 export class ProductsService {
-
     public async getByName(accountId: ObjectId | string, name: string): Promise<Product | null> {
-        const key = `products.accountId.${accountId}.name.${name}`
-        const cached = await Redis.get(key, (data) => new Product(data))
+        const parsedAccountId = new ObjectId(accountId)
+
+        const key = `products:${parsedAccountId.toHexString()}.${name}`
+        const cached = await Redis.get<Product>(key, (data) => new Product(data))
         if (cached) {
             return cached
         }
 
         const result = await Mongo.products.findOne({
-            accountId: new ObjectId(accountId),
+            accountId: parsedAccountId,
             name
         });
 
@@ -25,15 +27,18 @@ export class ProductsService {
     }
 
     public async getById(accountId: ObjectId | string, id: ObjectId | string): Promise<Product | null> {
-        const key = `products.accountId.${accountId}.id.${id}`
-        const cached = await Redis.get(key, (data) => new Product(data))
+        const parsedAccountId = new ObjectId(accountId)
+        const parsedId = new ObjectId(id)
+
+        const key = `products:${parsedAccountId.toHexString()}.${parsedId.toHexString()}`
+        const cached = await Redis.get<Product>(key, (data) => new Product(data))
         if (cached) {
             return cached
         }
 
         const result = await Mongo.products.findOne({
-            accountId: new ObjectId(accountId),
-            _id: new ObjectId(id)
+            accountId: parsedAccountId,
+            _id: parsedId
         });
 
         if (!result) {
@@ -45,15 +50,18 @@ export class ProductsService {
     }
 
     public async getManyByIds(accountId: ObjectId | string, ids: (ObjectId | string)[]): Promise<Product[] | null> {
-        const key = `products.accountId.${accountId}.ids.${ids.join(',')}`
-        const cached = await Redis.get<Product[]>(key)
+        const parsedAccountId = new ObjectId(accountId)
+        const parsedIds = ids.map(id => new ObjectId(id))
+
+        const key = `products:${parsedAccountId.toHexString()}.${parsedIds.map(id => id.toHexString()).join(',')}`
+        const cached = await Redis.get<Product[]>(key, (data) => data.map(product => new Product(product ?? {})));
         if (cached) {
-            return cached.map(product => new Product(product))
+            return cached
         }
 
         const result = await Mongo.products.find({
-            accountId: new ObjectId(accountId),
-            _id: { $in: ids.map(id => new ObjectId(id)) }
+            accountId: parsedAccountId,
+            _id: { $in: parsedIds }
         }).toArray();
 
         if (!result) {
