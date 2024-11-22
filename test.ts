@@ -1,16 +1,9 @@
-import { Kafka } from 'kafkajs'
-
-const kafka = new Kafka({
-  brokers: ['localhost:19092']
-})
-
-const producer = kafka.producer()
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 
 const run = async () => {
-  await producer.connect()
-
   let count = 0
-  for (let product = 0; product < 100; product++) {
+
+  for (let product = 0; product < 1000; product++) {
     const messages: any[] = []
     for (let i = 0; i < 1000; i++) {
       messages.push({
@@ -30,12 +23,16 @@ const run = async () => {
       })
     }
 
-    await producer.send({
-      topic: '1-dynamic-topic',
-      messages
+    const sendMessageCommands = new PutObjectCommand({
+      Bucket: 'eyal-ingest-test',
+      Key: `test-key-v3-${product}`,
+      Body: JSON.stringify(messages)
     })
+
+    console.time('send')
+    await new S3Client({ region: 'us-east-1' }).send(sendMessageCommands)
+    console.timeEnd('send')
   }
-  await producer.disconnect()
 }
 
 run().catch(console.error)

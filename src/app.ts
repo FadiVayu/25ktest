@@ -6,7 +6,7 @@ import { config } from './config'
 import { RegisterRoutes } from './routes'
 import bodyParser from 'body-parser'
 import { errorMiddleware, unknownMiddleware } from './middlewares'
-import { logger, Kafka, Mongo, Redis } from './shared'
+import { logger, Kafka, Mongo, Redis, S3FileProcessor } from './shared'
 import { traceMiddleware } from './middlewares'
 import { CalculationService } from './services/calculation.service'
 
@@ -14,7 +14,6 @@ import { CalculationService } from './services/calculation.service'
 async function initDependencies() {
     await Promise.all([
         Mongo.connect(config.MONGO.uri),
-        Kafka.connect(config.KAFKA.brokers),
         Redis.connect(config.REDIS.uri)
     ])
 }
@@ -37,12 +36,17 @@ async function startAPI() {
 }
 
 async function startEvents() {
-    await Kafka.start()
+    console.log('Starting events')
+    const processor = new S3FileProcessor('us-east-1', 'eyal-ingest-test')
+
+    await processor.processBucket()
 }
 
 async function main() {
+    const test = 'events' as string
+
     try {
-        switch (config.MODE) {
+        switch (test) {
             case 'api':
                 await initDependencies()
                 await startAPI()
