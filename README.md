@@ -18,3 +18,5 @@ and unlocks and then processes recalculations
 near realtime value calculations
 
 
+
+& minikube -p minikube docker-env --shell powershell | Invoke-Expression

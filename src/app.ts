@@ -9,6 +9,7 @@ import { errorMiddleware, unknownMiddleware } from './middlewares'
 import { logger, Kafka, Mongo, Redis } from './shared'
 import { traceMiddleware } from './middlewares'
 import { CalculationService } from './services/calculation.service'
+import { run } from './test'
 
 
 async function initDependencies() {
@@ -54,6 +55,9 @@ async function main() {
             case 'worker':
                 await initDependencies()
                 await CalculationService.startCron()
+                break
+            case 'test':
+                await run()
                 break
             default:
                 throw new Error('Invalid mode')

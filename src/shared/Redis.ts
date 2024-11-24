@@ -13,10 +13,10 @@ export class Redis {
         await this.client.connect()
 
         this.locker = new Redlock([this.client], {
-            driftFactor: 0.01, // Compensation for clock drift
-            retryCount: -1,    // Infinite retries, we handle the limit manually
-            retryDelay: 100,   // Initial retry delay (can be overridden)
-            retryJitter: 200   // Optional jitter to reduce contention
+            driftFactor: 0.01,
+            retryCount: -1,
+            retryDelay: 100,
+            retryJitter: 200
         })
     }
 

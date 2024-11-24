@@ -60,8 +60,12 @@ export class Kafka {
         this.messageCount += batch.messages.length
         await Promise.all(
           batch.messages.map(async (message: KafkaMessage) => {
-            const parsed = JSON.parse(message.value as any) as IngestedEvent
-            await this.handler.handle(parsed)
+            try {
+              const parsed = JSON.parse(message.value as any) as IngestedEvent
+              await this.handler.handle(parsed)
+            } catch (e) {
+              console.error('Error processing message', e)
+            }
           })
         )
         this.messageCountAfterProcessing += batch.messages.length
@@ -87,12 +91,12 @@ export class Kafka {
         this.maxMessagePerSecAfterProcessing,
         messagesPerSecondAfterProcessing
       )
-      // console.log(
-      //   `Messages per second: ${messagesPerSecond.toFixed(2)};  Max: ${this.maxMessagePerSec.toFixed(2)}`
-      // )
-      // console.log(
-      //   `Messages per second after processing: ${messagesPerSecondAfterProcessing.toFixed(2)};  Max: ${this.maxMessagePerSecAfterProcessing.toFixed(2)}`
-      // )
+      console.log(
+        `Messages per second: ${messagesPerSecond.toFixed(2)};  Max: ${this.maxMessagePerSec.toFixed(2)}`
+      )
+      console.log(
+        `Messages per second after processing: ${messagesPerSecondAfterProcessing.toFixed(2)};  Max: ${this.maxMessagePerSecAfterProcessing.toFixed(2)}`
+      )
 
       this.messageCount = 0
       this.messageCountAfterProcessing = 0

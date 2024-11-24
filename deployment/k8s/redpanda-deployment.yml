@@ -1,0 +1,111 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: redpanda-pv
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: standard
+  hostPath:
+    path: /mnt/data/redpanda
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redpanda-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redpanda-config
+data:
+  redpanda.yaml: |
+    config_file: /etc/redpanda/redpanda.yaml
+    redpanda:
+      data_directory: /var/lib/redpanda/data
+      node_id: 0
+      rpc_server:
+        address: 0.0.0.0
+        port: 33145
+      kafka_api:
+        - address: 0.0.0.0
+          port: 9092
+      advertised_kafka_api:
+        - address: redpanda
+          port: 19092
+      admin:
+        - address: 0.0.0.0
+          port: 9644
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redpanda
+  labels:
+    app: redpanda
+spec:
+  ports:
+    - name: kafka
+      port: 19092
+      protocol: TCP
+      targetPort: 19092
+  selector:
+    app: redpanda
+  clusterIP: None
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redpanda
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redpanda
+  template:
+    metadata:
+      labels:
+        app: redpanda
+    spec:
+      containers:
+        - name: redpanda
+          image: docker.redpanda.com/redpandadata/redpanda:v24.2.10
+          command: ["sh", "-c", "while true; do sleep 3600; done"]
+          ports:
+            - containerPort: 9092
+              name: kafka-internal
+            - containerPort: 19092
+              name: kafka-external
+            - containerPort: 8082
+              name: pproxy-internal
+            - containerPort: 18082
+              name: pproxy-external
+            - containerPort: 8081
+              name: sr-internal
+            - containerPort: 18081
+              name: sr-external
+            - containerPort: 33145
+              name: rpc
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/redpanda/data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: redpanda-data
+        - name: config
+          configMap:
+            name: redpanda-config
+        - name: writable-config
+          emptyDir: {}
