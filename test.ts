@@ -4,7 +4,7 @@ import { v4 } from 'uuid'
 const run = async () => {
   let count = 0
 
-  for (let product = 0; product < 1000; product++) {
+  for (let product = 0; product < 100; product++) {
     const messages: any[] = []
     for (let i = 0; i < 1000; i++) {
       messages.push({
