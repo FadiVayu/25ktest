@@ -7,7 +7,6 @@ const run = async () => {
     const messages: any[] = []
     for (let i = 0; i < 1000; i++) {
       messages.push({
-        value: JSON.stringify({
           accountId: '60d5ec49f1b2c72b8c8b4567',
           timestamp: Date.now(),
           data: {
@@ -19,8 +18,8 @@ const run = async () => {
           ref: `some-ref-${i}-${product}-${Date.now()}`,
           customerAlias: `customer-${i % 10}`,
           eventName: `Meter ${product}`
-        })
-      })
+        }
+      )
     }
 
     const sendMessageCommands = new PutObjectCommand({
