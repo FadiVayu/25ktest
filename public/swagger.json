@@ -6,7 +6,94 @@
 		"parameters": {},
 		"requestBodies": {},
 		"responses": {},
-		"schemas": {},
+		"schemas": {
+			"ObjectId": {
+				"type": "string",
+				"description": "A class representation of the BSON ObjectId type."
+			},
+			"Invoice": {
+				"properties": {
+					"_id": {
+						"$ref": "#/components/schemas/ObjectId"
+					},
+					"createdAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"updatedAt": {
+						"type": "string",
+						"format": "date-time"
+					},
+					"name": {
+						"type": "string"
+					},
+					"accountId": {
+						"$ref": "#/components/schemas/ObjectId"
+					},
+					"customerId": {
+						"$ref": "#/components/schemas/ObjectId"
+					},
+					"priceBreakdown": {
+						"type": "number",
+						"format": "double"
+					},
+					"products": {
+						"items": {
+							"properties": {
+								"units": {
+									"type": "number",
+									"format": "double"
+								},
+								"price": {
+									"type": "number",
+									"format": "double"
+								},
+								"id": {
+									"$ref": "#/components/schemas/ObjectId"
+								}
+							},
+							"required": [
+								"units",
+								"price",
+								"id"
+							],
+							"type": "object"
+						},
+						"type": "array"
+					},
+					"billingPeriod": {
+						"properties": {
+							"endTime": {
+								"type": "string",
+								"format": "date-time"
+							},
+							"startTime": {
+								"type": "string",
+								"format": "date-time"
+							}
+						},
+						"required": [
+							"endTime",
+							"startTime"
+						],
+						"type": "object"
+					}
+				},
+				"required": [
+					"_id",
+					"createdAt",
+					"updatedAt",
+					"name",
+					"accountId",
+					"customerId",
+					"priceBreakdown",
+					"products",
+					"billingPeriod"
+				],
+				"type": "object",
+				"additionalProperties": true
+			}
+		},
 		"securitySchemes": {}
 	},
 	"info": {
@@ -18,6 +105,39 @@
 		"contact": {}
 	},
 	"paths": {
+		"/invoices/{id}/Calculate": {
+			"get": {
+				"operationId": "Calculate",
+				"responses": {
+					"200": {
+						"description": "Ok",
+						"content": {
+							"application/json": {
+								"schema": {
+									"allOf": [
+										{
+											"$ref": "#/components/schemas/Invoice"
+										}
+									],
+									"nullable": true
+								}
+							}
+						}
+					}
+				},
+				"security": [],
+				"parameters": [
+					{
+						"in": "path",
+						"name": "id",
+						"required": true,
+						"schema": {
+							"type": "string"
+						}
+					}
+				]
+			}
+		},
 		"/hello": {
 			"get": {
 				"operationId": "Hello",

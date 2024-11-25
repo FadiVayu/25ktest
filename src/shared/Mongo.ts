@@ -22,6 +22,8 @@ export class Mongo {
     await this.createIndexSafely<Customer>('customers', { accountId: 1, externalId: 1 }, { unique: true })
     await this.createIndexSafely<Event>('events', { accountId: 1, ref: 1 }, { unique: true })
     await this.createIndexSafely<Product>('products', { accountId: 1, name: 1 }, { unique: true })
+    await this.createIndexSafely<Event>('events', { accountId: 1, customerId: 1, productId: 1 })
+    await this.createIndexSafely<Event>('events', { accountId: 1, customerId: 1, productId: 1, timestamp: 1 })
   }
 
   public static async connect(uri: string): Promise<void> {
