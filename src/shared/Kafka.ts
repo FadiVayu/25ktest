@@ -61,7 +61,7 @@ export class Kafka {
         await Promise.all(
           batch.messages.map(async (message: KafkaMessage) => {
             const parsed = JSON.parse(message.value as any) as IngestedEvent
-            await this.handler.handle(parsed)
+            await this.handler.handle(parsed as any)
           })
         )
         this.messageCountAfterProcessing += batch.messages.length

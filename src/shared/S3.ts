@@ -74,6 +74,8 @@ export class S3FileProcessor {
         return
       }
 
+      console.time('Processing single file')
+
       const fileAsString = await this.downloadFile(key)
 
       await Redis.set(key, key)
@@ -81,6 +83,9 @@ export class S3FileProcessor {
       const events = this.processFile(fileAsString)
 
       await this.handlerService.handle(events)
+
+
+      console.timeEnd('Processing single file')
     })
 
     await Promise.all(tasks2)

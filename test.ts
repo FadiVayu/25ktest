@@ -1,4 +1,5 @@
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import { v4 } from 'uuid'
 
 const run = async () => {
   let count = 0
@@ -15,9 +16,9 @@ const run = async () => {
             someField: 'not',
             valueField: 12334
           },
-          ref: `some-ref-${i}-${product}-${Date.now()}`,
+          ref: `some-ref-${i}-${product}-${Date.now()}-${v4()}`,
           customerAlias: `customer-${i % 10}`,
-          eventName: `Meter ${product}`
+          eventName: `Meter ${product % 100}`
         }
       )
     }
