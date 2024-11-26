@@ -1,9 +1,9 @@
 import { ObjectId } from 'mongodb'
-import { CreateInvoicePayload, Invoice } from '../models'
+import { APIError, CreateInvoicePayload, Invoice, UpdateInvoicePayload } from '../models'
 import { Mongo, Redis } from '../shared'
 
 export class InvoicesService {
-  public async get(id: ObjectId | string): Promise<Invoice | null> {
+  public async get(id: ObjectId | string): Promise<Invoice> {
     const parsedId = new ObjectId(id)
 
     const key = `invoices:${parsedId.toHexString()}`
@@ -18,7 +18,7 @@ export class InvoicesService {
     })
 
     if (!result) {
-      return null
+      throw new APIError('Invoice not found', 404)
     }
 
     const invoice = new Invoice(result)
@@ -26,37 +26,51 @@ export class InvoicesService {
 
     return invoice
   }
-  
-  public async create(invoice: CreateInvoicePayload): Promise<string> {
-    const createdResult = await Mongo.invoices.insertOne(new Invoice(invoice))
 
-    return createdResult.insertedId.toHexString()
+  public async create(invoice: CreateInvoicePayload): Promise<Invoice> {
+    const validatedPayload = Invoice.validateCreate(invoice)
+    const newInvoice = new Invoice(validatedPayload)
+
+    const createdResult = await Mongo.invoices.insertOne(newInvoice)
+
+    return this.get(createdResult.insertedId)
   }
 
   public async update(
     id: string | ObjectId,
-    invoice: Partial<Invoice>
-  ): Promise<Invoice | null> {
+    payload: UpdateInvoicePayload
+  ): Promise<Invoice> {
     const parsedId = new ObjectId(id)
+    const validatedPayload = Invoice.validateUpdate(payload)
 
     const key = `invoices:${parsedId.toHexString()}`
     const result = await Mongo.invoices.findOneAndUpdate(
       { _id: parsedId },
-      { $set: invoice },
+      { $set: validatedPayload },
       { returnDocument: 'after' }
     )
 
+    if (!result) {
+      throw new APIError('Invoice not found', 404)
+    }
+
     await Redis.invalidate(key)
-    return result ? new Invoice(result) : null
+
+    return new Invoice(result)
   }
 
-  public async getAffectedInvoices(productId: ObjectId | string, timestamp: Date | number): Promise<ObjectId[]> {
-    const result = await Mongo.invoices.find<{ _id: ObjectId }>({
-      'products.id': new ObjectId(productId),
-      'billingPeriod.startTime': { $lte: new Date(timestamp) },
-      'billingPeriod.endTime': { $gte: new Date(timestamp) }
-    }, { projection: { _id: 1 } }).toArray()
+  public async delete(id: string | ObjectId): Promise<void> {
+    const parsedId = new ObjectId(id)
 
-    return result.map(({ _id }) => _id)
+    const key = `invoices:${parsedId.toHexString()}`
+    const result = await Mongo.invoices.deleteOne({
+      _id: parsedId
+    })
+
+    if (result.deletedCount === 0) {
+      return // do not indicate errors to not expose internal state
+    }
+
+    await Redis.invalidate(key)
   }
 }

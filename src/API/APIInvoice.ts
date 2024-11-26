@@ -2,6 +2,8 @@ import { Invoice } from "../models"
 
 
 export class APIInvoice {
+  /** ID */
+  public id!: string
   /** Name */
   public name!: string
   /** Account ID */
@@ -29,6 +31,7 @@ export class APIInvoice {
 
   public static fromEntity(entity: Invoice): APIInvoice {
     return new APIInvoice({
+      id: entity._id.toHexString(),
       name: entity.name,
       accountId: entity.accountId.toHexString(),
       customerId: entity.customerId.toHexString(),
