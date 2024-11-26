@@ -1,12 +1,10 @@
 {
   "name": "25k",
   "version": "1.0.0",
-  "main": "index.js",
-  "type": "module",
   "scripts": {
     "build": "npm run tsoa && tsc",
     "start": "node dist/src/app.js",
-    "dev": "npm run tsoa && ts-node src/app.ts",
+    "dev": "npm run tsoa && nodemon",
     "lint": "eslint . --ext .ts --fix",
     "tsoa": "tsoa spec-and-routes",
     "test": "mocha --require @swc/register --exit 'tests/**/*.spec.ts'",
@@ -31,6 +29,7 @@
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-prettier": "^5.1.3",
     "mocha": "^10.8.2",
+    "nodemon": "^3.1.7",
     "prettier": "^3.2.5",
     "ts-node": "^10.9.2",
     "tsoa": "^6.2.1",

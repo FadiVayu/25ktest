@@ -107,10 +107,10 @@
 	"paths": {
 		"/invoices/{id}/Calculate": {
 			"get": {
-				"operationId": "Calculate",
+				"operationId": "Calculate Invoice",
 				"responses": {
 					"200": {
-						"description": "Ok",
+						"description": "Invoice total calculated",
 						"content": {
 							"application/json": {
 								"schema": {
@@ -125,6 +125,9 @@
 						}
 					}
 				},
+				"tags": [
+					"Invoices"
+				],
 				"security": [],
 				"parameters": [
 					{
