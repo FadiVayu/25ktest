@@ -6,7 +6,7 @@ import {  fetchMiddlewares, ExpressTemplateService } from '@tsoa/runtime';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { InvoicesController } from './controllers/invoices.controller';
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-import { HelloController } from './controllers/hello.controller';
+import { HealthController } from './controllers/hello.controller';
 import type { Request as ExRequest, Response as ExResponse, RequestHandler, Router } from 'express';
 
 
@@ -82,11 +82,11 @@ export function RegisterRoutes(app: Router) {
             }
         });
         // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-        app.get('/api/hello',
-            ...(fetchMiddlewares<RequestHandler>(HelloController)),
-            ...(fetchMiddlewares<RequestHandler>(HelloController.prototype.hello)),
+        app.get('/api/health',
+            ...(fetchMiddlewares<RequestHandler>(HealthController)),
+            ...(fetchMiddlewares<RequestHandler>(HealthController.prototype.health)),
 
-            async function HelloController_hello(request: ExRequest, response: ExResponse, next: any) {
+            async function HealthController_health(request: ExRequest, response: ExResponse, next: any) {
             const args: Record<string, TsoaRoute.ParameterSchema> = {
             };
 
@@ -96,10 +96,10 @@ export function RegisterRoutes(app: Router) {
             try {
                 validatedArgs = templateService.getValidatedArgs({ args, request, response });
 
-                const controller = new HelloController();
+                const controller = new HealthController();
 
               await templateService.apiHandler({
-                methodName: 'hello',
+                methodName: 'health',
                 controller,
                 response,
                 next,

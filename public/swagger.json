@@ -138,9 +138,9 @@
 				]
 			}
 		},
-		"/hello": {
+		"/health": {
 			"get": {
-				"operationId": "Hello",
+				"operationId": "Health",
 				"responses": {
 					"200": {
 						"description": "Ok",
