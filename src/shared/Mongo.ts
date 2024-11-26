@@ -1,41 +1,29 @@
-import { MongoClient, Db } from 'mongodb'
+import { MongoClient, Db, IndexSpecification, CreateIndexesOptions } from 'mongodb'
 import { config } from '../config'
-import { Event, Customer, Product, Invoice } from '../models'
+import { Event, Customer, Product, Invoice, IngestedEvent } from '../models'
 
 export class Mongo {
   public static client: MongoClient
   public static db: Db
 
+  private static async createIndexSafely<T = any >(collection: string, index: IndexSpecification & Partial<Record<keyof T, 1 | -1>>, options?: CreateIndexesOptions) {
+    const collectionExists = await this.db.listCollections({ name: collection }).hasNext()
+    if (!collectionExists) {
+      await this.db.createCollection(collection)
+    }
+
+    const indexEntries = Object.entries(index).map(([key, value]) => `${key}_${value}`).join('_')
+    const indexName = `${options?.unique ? 'uniq' : 'idx'}_${indexEntries}`
+
+    return this.db.collection(collection).createIndex(index, { ...options, name: indexName, background: true })
+  }
+  
   private static async createIndexes(): Promise<void> {
-    const customersCollection = this.db.collection<Customer>('customers')
-
-    await customersCollection.createIndex(
-      {
-        accountId: 1,
-        externalId: 1
-      },
-      { unique: true, background: true }
-    )
-
-    const eventsCollection = this.db.collection('events')
-
-    await eventsCollection.createIndex(
-      {
-        accountId: 1,
-        ref: 1
-      },
-      { unique: true, background: true }
-    )
-
-    const productsCollection = this.db.collection('products')
-
-    await productsCollection.createIndex(
-      {
-        accountId: 1,
-        name: 1
-      },
-      { unique: true, background: true }
-    )
+    await this.createIndexSafely<Customer>('customers', { accountId: 1, externalId: 1 }, { unique: true })
+    await this.createIndexSafely<Event>('events', { accountId: 1, ref: 1 }, { unique: true })
+    await this.createIndexSafely<Product>('products', { accountId: 1, name: 1 }, { unique: true })
+    await this.createIndexSafely<Event>('events', { accountId: 1, customerId: 1, productId: 1 })
+    await this.createIndexSafely<Event>('events', { accountId: 1, customerId: 1, productId: 1, timestamp: 1 })
   }
 
   public static async connect(uri: string): Promise<void> {
@@ -50,6 +38,10 @@ export class Mongo {
     this.db = this.client.db(config.MONGO.db)
 
     await this.createIndexes()
+  }
+
+  public static get rawEvents() {
+    return this.db.collection<IngestedEvent>('rawEvents')
   }
 
   public static get events() {
