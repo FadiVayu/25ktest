@@ -6,44 +6,6 @@ import { InvoicesService } from './invoices.service'
 import { CalculationUtils } from '../utils'
 
 export class CalculationService {
-  private static _intervalId: NodeJS.Timeout | null = null
-  private static _instance: CalculationService | null = null
-  public static get instance() {
-    if (!CalculationService._instance) {
-      CalculationService._instance = new CalculationService()
-    }
-
-    return CalculationService._instance
-  }
-
-  public static startCron() {
-    if (this._intervalId) {
-      clearInterval(this._intervalId)
-    }
-
-    this._intervalId = setInterval(this.calculateInvoices, 100)
-  }
-
-  public static async calculateInvoices() {
-    try {
-      const lock = await Redis.lock('invoices:to-calculate')
-      const invoiceIdsToCalc = await Redis.get<ObjectId[]>('invoices:to-calculate', (data) => data.map((id) => new ObjectId(id)))
-      await Redis.invalidate('invoices:to-calculate')
-      await lock.release()
-
-      console.log('Calculating invoice totals:', invoiceIdsToCalc)
-      if (!invoiceIdsToCalc || !invoiceIdsToCalc.length) {
-        return
-      }
-
-      for (const invoice of invoiceIdsToCalc) {
-        await this.instance.calculateInvoiceTotal(invoice)
-      }
-    } catch (error) {
-      console.error('Error calculating invoice totals:', error)
-    }
-  }
-
   private productsService: ProductsService
   private invoicesService: InvoicesService
 

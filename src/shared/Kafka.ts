@@ -31,7 +31,6 @@ export class Kafka {
     await this.restartConsumer()
 
     this.pollForNewTopics()
-    this.logRate()
   }
 
   public static async subscribeToTopics() {
@@ -57,49 +56,14 @@ export class Kafka {
 
     this.consumer.run({
       eachBatch: async ({ batch }) => {
-        this.messageCount += batch.messages.length
         await Promise.all(
           batch.messages.map(async (message: KafkaMessage) => {
             const parsed = JSON.parse(message.value as any) as IngestedEvent
-            await this.handler.handle(parsed)
+            await this.handler.handle(parsed as any)
           })
         )
-        this.messageCountAfterProcessing += batch.messages.length
       }
     })
-  }
-
-  private static messageCount = 0
-  private static messageCountAfterProcessing = 0
-  private static maxMessagePerSec = 0
-  private static maxMessagePerSecAfterProcessing = 0
-  private static lastLoggedTime = Date.now()
-  public static async logRate() {
-    const logRate = () => {
-      const now = Date.now()
-      const elapsedSeconds = (now - this.lastLoggedTime) / 1000
-
-      const messagesPerSecondAfterProcessing =
-        this.messageCountAfterProcessing / elapsedSeconds
-      const messagesPerSecond = this.messageCount / elapsedSeconds
-      this.maxMessagePerSec = Math.max(this.maxMessagePerSec, messagesPerSecond)
-      this.maxMessagePerSecAfterProcessing = Math.max(
-        this.maxMessagePerSecAfterProcessing,
-        messagesPerSecondAfterProcessing
-      )
-      // console.log(
-      //   `Messages per second: ${messagesPerSecond.toFixed(2)};  Max: ${this.maxMessagePerSec.toFixed(2)}`
-      // )
-      // console.log(
-      //   `Messages per second after processing: ${messagesPerSecondAfterProcessing.toFixed(2)};  Max: ${this.maxMessagePerSecAfterProcessing.toFixed(2)}`
-      // )
-
-      this.messageCount = 0
-      this.messageCountAfterProcessing = 0
-      this.lastLoggedTime = now
-    }
-
-    setInterval(logRate, 1000)
   }
 
   public static async pollForNewTopics() {
@@ -109,7 +73,6 @@ export class Kafka {
       const topics = await this.admin.listTopics()
       if (!isEqual(topics, currentTopics)) {
         console.log('Detected new topics, restarting consumer, TODO: something')
-        // await this.restartConsumer();
         currentTopics = topics
       }
 

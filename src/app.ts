@@ -6,14 +6,12 @@ import { config } from './config'
 import { RegisterRoutes } from './routes'
 import bodyParser from 'body-parser'
 import { errorMiddleware, unknownMiddleware } from './middlewares'
-import { logger, Kafka, Mongo, Redis } from './shared'
+import { logger, Mongo, Redis, S3FileProcessor, Redoc } from './shared'
 import { traceMiddleware } from './middlewares'
-import { CalculationService } from './services'
 
 async function initDependencies() {
     await Promise.all([
         Mongo.connect(config.MONGO.uri, config.MONGO.db),
-        Kafka.connect(config.KAFKA.brokers),
         Redis.connect(config.REDIS.uri)
     ])
 }
@@ -24,6 +22,8 @@ async function startAPI() {
     app.use(bodyParser.urlencoded({ extended: true }))
     app.use(bodyParser.json())
     app.use(traceMiddleware)
+
+    Redoc.init(app)
 
     RegisterRoutes(app)
 
@@ -36,7 +36,8 @@ async function startAPI() {
 }
 
 async function startEvents() {
-    await Kafka.start()
+    const processor = new S3FileProcessor(config.S3.BUCKET_REGION, config.S3.BUCKET_NAME)
+    await processor.start()
 }
 
 async function main() {
@@ -50,15 +51,11 @@ async function main() {
                 await initDependencies()
                 await startEvents()
                 break
-            case 'worker':
-                await initDependencies()
-                await CalculationService.startCron()
-                break
             default:
                 throw new Error('Invalid mode')
         }
     } catch (e) {
-        logger.error('Unable to start the server', e)
+        logger.error('Error Occurred', e)
         process.exit(1)
     }
 }
