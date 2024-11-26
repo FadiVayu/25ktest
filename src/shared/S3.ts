@@ -5,54 +5,38 @@ import {
   ListObjectsV2Command
 } from '@aws-sdk/client-s3'
 import { EventEmitter } from 'events'
-
 import { Redis } from './Redis'
 import { IngestedEvent } from '../models'
-import { Mongo } from './Mongo'
-import { v4 } from 'uuid'
 import { MessageHandlerService } from '../services'
-
 
 
 export class S3FileProcessor {
   private s3: S3Client
   private bucketName: string
-  private localDir: string
-  private handlerService: MessageHandlerService 
+  private handlerService: MessageHandlerService
 
   constructor(
-    region: string,
-    bucketName: string,
-    localDir: string = './downloads'
+    region: string | undefined,
+    bucketName: string | undefined,
   ) {
+    if (!bucketName || !region) {
+      throw new Error('Invalid parameters')
+    }
+
     EventEmitter.setMaxListeners(50)
     this.s3 = new S3Client({ region })
     this.bucketName = bucketName
-    this.localDir = localDir
     this.handlerService = new MessageHandlerService()
   }
 
-  private async downloadFile(key: string): Promise<string> {
-    const params = { Bucket: this.bucketName, Key: key }
-    const getObjectCommand = new GetObjectCommand(params)
-    const data = await this.s3.send(getObjectCommand)
-    const body = data.Body
-
-    if (!body || typeof body.transformToString !== 'function') {
-      throw new Error(`Failed to download or transform file: ${key}`)
+  public async start(): Promise<void> {
+    while (true) {
+      await this.processBucket()
+      await new Promise((resolve) => setTimeout(resolve, 1000))
     }
-
-    const fileAsString = await body.transformToString()
-    return fileAsString
   }
 
-  private processFile(fileAsString: string): IngestedEvent[] {
-    const fileEvents = parse(fileAsString)
-
-    return Array.isArray(fileEvents) ? fileEvents : [fileEvents]
-  }
-
-  public async processBucket(): Promise<void> {
+  private async processBucket(): Promise<void> {
     console.time('Processing Single Bucket Events')
 
     const listParams = { Bucket: this.bucketName }
@@ -92,5 +76,25 @@ export class S3FileProcessor {
     console.timeEnd('Processing Single Bucket Events')
 
     return;
+  }
+
+  private async downloadFile(key: string): Promise<string> {
+    const params = { Bucket: this.bucketName, Key: key }
+    const getObjectCommand = new GetObjectCommand(params)
+    const data = await this.s3.send(getObjectCommand)
+    const body = data.Body
+
+    if (!body || typeof body.transformToString !== 'function') {
+      throw new Error(`Failed to download or transform file: ${key}`)
+    }
+
+    const fileAsString = await body.transformToString()
+    return fileAsString
+  }
+
+  private processFile(fileAsString: string): IngestedEvent[] {
+    const fileEvents = parse(fileAsString)
+
+    return Array.isArray(fileEvents) ? fileEvents : [fileEvents]
   }
 }

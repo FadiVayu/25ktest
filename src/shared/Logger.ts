@@ -1,7 +1,7 @@
 import winston from 'winston'
 
 const logFormat = winston.format.printf(({ level, message, timestamp }) => {
-    return `${timestamp} ${level}: ${message}`
+    return `[${timestamp}] ${level}: ${message}`
 })
 
 export const logger = winston.createLogger({

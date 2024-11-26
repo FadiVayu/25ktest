@@ -1,15 +1,13 @@
 import dotenv from 'dotenv'
 dotenv.config()
 
-import express, { Express, Request, Response, NextFunction } from 'express'
+import express, { Express } from 'express'
 import { config } from './config'
 import { RegisterRoutes } from './routes'
 import bodyParser from 'body-parser'
 import { errorMiddleware, unknownMiddleware } from './middlewares'
-import { logger, Kafka, Mongo, Redis, S3FileProcessor } from './shared'
+import { logger, Mongo, Redis, S3FileProcessor, Redoc } from './shared'
 import { traceMiddleware } from './middlewares'
-import { CalculationService } from './services/calculation.service'
-
 
 async function initDependencies() {
     await Promise.all([
@@ -25,6 +23,8 @@ async function startAPI() {
     app.use(bodyParser.json())
     app.use(traceMiddleware)
 
+    Redoc.init(app)
+
     RegisterRoutes(app)
 
     app.use(errorMiddleware)
@@ -36,17 +36,13 @@ async function startAPI() {
 }
 
 async function startEvents() {
-    console.log('Starting events')
-    const processor = new S3FileProcessor('us-east-1', 'eyal-ingest-test')
-
-    await processor.processBucket()
+    const processor = new S3FileProcessor(config.S3.BUCKET_REGION, config.S3.BUCKET_NAME)
+    await processor.start()
 }
 
 async function main() {
-    const test = 'events' as string
-
     try {
-        switch (test) {
+        switch (config.MODE) {
             case 'api':
                 await initDependencies()
                 await startAPI()
@@ -55,15 +51,11 @@ async function main() {
                 await initDependencies()
                 await startEvents()
                 break
-            case 'worker':
-                await initDependencies()
-                await CalculationService.startCron()
-                break
             default:
                 throw new Error('Invalid mode')
         }
     } catch (e) {
-        logger.error('Unable to start the server', e)
+        logger.error('Error Occurred', e)
         process.exit(1)
     }
 }

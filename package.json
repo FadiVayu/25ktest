@@ -41,6 +41,7 @@
     "mongodb": "^6.6.1",
     "pg": "^8.13.1",
     "redlock": "^5.0.0-beta.2",
+    "redoc-express": "^2.1.0",
     "uuid": "^11.0.3",
     "winston": "^3.13.0"
   }
