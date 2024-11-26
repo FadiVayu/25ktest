@@ -2,15 +2,21 @@ import { MongoEntity } from './mongoEntity.model'
 import { ObjectId } from 'mongodb'
 
 export class Invoice extends MongoEntity {
+  /* Invoice Name */
   public name!: string
+  /* Invoice Account ID */
   public accountId!: ObjectId
+  /* Invoice Customer ID */
   public customerId!: ObjectId
+  /* Invoice Price Breakdown */
   public priceBreakdown!: number
+  /* Invoice Products */
   public products!: {
     id: ObjectId
     price: number
     units: number
   }[]
+  /* Invoice Billing Period */
   public billingPeriod!: {
     startTime: Date
     endTime: Date

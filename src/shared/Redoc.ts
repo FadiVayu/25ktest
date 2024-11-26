@@ -11,6 +11,9 @@ export class Redoc {
             contrastText: '#FFFFFF',
           },
         },
+        logo: {
+          url: 'https://picsum.photos/200',
+        },
         typography: {
           fontFamily: 'Inter, sans-serif',
           fontSize: '15px',
@@ -20,8 +23,9 @@ export class Redoc {
             backgroundColor: '#4D4D4E'
           }
         },
-        menu: {
-          backgroundColor: '#0D1B28'
+        sidebar: {
+          backgroundColor: '#0D1B28',
+          textColor: '#FFFFFF',
         }
       }
     }

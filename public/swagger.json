@@ -7,49 +7,41 @@
 		"requestBodies": {},
 		"responses": {},
 		"schemas": {
-			"ObjectId": {
-				"type": "string",
-				"description": "A class representation of the BSON ObjectId type."
-			},
-			"Invoice": {
+			"APIInvoice": {
 				"properties": {
-					"_id": {
-						"$ref": "#/components/schemas/ObjectId"
-					},
-					"createdAt": {
-						"type": "string",
-						"format": "date-time"
-					},
-					"updatedAt": {
-						"type": "string",
-						"format": "date-time"
-					},
 					"name": {
-						"type": "string"
+						"type": "string",
+						"description": "Name"
 					},
 					"accountId": {
-						"$ref": "#/components/schemas/ObjectId"
+						"type": "string",
+						"description": "Account ID"
 					},
 					"customerId": {
-						"$ref": "#/components/schemas/ObjectId"
+						"type": "string",
+						"description": "Customer ID"
 					},
 					"priceBreakdown": {
 						"type": "number",
-						"format": "double"
+						"format": "double",
+						"description": "Price Breakdown"
 					},
 					"products": {
 						"items": {
 							"properties": {
 								"units": {
 									"type": "number",
-									"format": "double"
+									"format": "double",
+									"description": "Product accumulated unit"
 								},
 								"price": {
 									"type": "number",
-									"format": "double"
+									"format": "double",
+									"description": "Product calculated price"
 								},
 								"id": {
-									"$ref": "#/components/schemas/ObjectId"
+									"type": "string",
+									"description": "Product ID"
 								}
 							},
 							"required": [
@@ -59,30 +51,31 @@
 							],
 							"type": "object"
 						},
-						"type": "array"
+						"type": "array",
+						"description": "Products"
 					},
 					"billingPeriod": {
 						"properties": {
 							"endTime": {
 								"type": "string",
-								"format": "date-time"
+								"format": "date-time",
+								"description": "Period End Date"
 							},
 							"startTime": {
 								"type": "string",
-								"format": "date-time"
+								"format": "date-time",
+								"description": "Period Start Date"
 							}
 						},
 						"required": [
 							"endTime",
 							"startTime"
 						],
-						"type": "object"
+						"type": "object",
+						"description": "Billing Period"
 					}
 				},
 				"required": [
-					"_id",
-					"createdAt",
-					"updatedAt",
 					"name",
 					"accountId",
 					"customerId",
@@ -116,7 +109,7 @@
 								"schema": {
 									"allOf": [
 										{
-											"$ref": "#/components/schemas/Invoice"
+											"$ref": "#/components/schemas/APIInvoice"
 										}
 									],
 									"nullable": true
@@ -156,6 +149,9 @@
 						}
 					}
 				},
+				"tags": [
+					"Health"
+				],
 				"security": [],
 				"parameters": []
 			}

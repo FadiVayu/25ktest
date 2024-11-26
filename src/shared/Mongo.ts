@@ -13,7 +13,6 @@ export class Mongo {
     
     if (collections.length === 0) {
       await this.db.createCollection(collection);
-      console.log(`Collection created: ${collection}`);
     }
 
     const existingIndexes = await this.db.collection(collection).listIndexes().toArray();
@@ -28,18 +27,17 @@ export class Mongo {
 
     if (!indexExists) {
       await this.db.collection(collection).createIndex(index, { ...options, name: indexName, background: true });
-      console.log(`Index created for collection ${collection}:`, index);
     } else {
       console.log(`Index already exists for collection ${collection}:`, index);
     }
   }
   
   private static async createIndexes(): Promise<void> {
-    await this.createIndexSafely<Customer>('customers', { accountId: 1, externalId: 1 }, { unique: true })
-    await this.createIndexSafely<Event>('events', { accountId: 1, ref: 1 }, { unique: true })
-    await this.createIndexSafely<Product>('products', { accountId: 1, name: 1 }, { unique: true })
-    await this.createIndexSafely<Event>('events', { accountId: 1, customerId: 1, productId: 1 })
-    await this.createIndexSafely<Event>('events', { accountId: 1, customerId: 1, productId: 1, timestamp: 1 })
+    // await this.createIndexSafely<Customer>('customers', { accountId: 1, externalId: 1 }, { unique: true })
+    // await this.createIndexSafely<Event>('events', { accountId: 1, ref: 1 }, { unique: true })
+    // await this.createIndexSafely<Product>('products', { accountId: 1, name: 1 }, { unique: true })
+    // await this.createIndexSafely<Event>('events', { accountId: 1, customerId: 1, productId: 1 })
+    // await this.createIndexSafely<Event>('events', { accountId: 1, customerId: 1, productId: 1, timestamp: 1 })
   }
 
   public static async connect(uri: string, db: string): Promise<void> {

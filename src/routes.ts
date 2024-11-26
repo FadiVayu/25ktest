@@ -14,22 +14,14 @@ import type { Request as ExRequest, Response as ExResponse, RequestHandler, Rout
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 
 const models: TsoaRoute.Models = {
-    "ObjectId": {
-        "dataType": "refAlias",
-        "type": {"dataType":"string","validators":{}},
-    },
-    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
-    "Invoice": {
+    "APIInvoice": {
         "dataType": "refObject",
         "properties": {
-            "_id": {"ref":"ObjectId","required":true},
-            "createdAt": {"dataType":"datetime","required":true},
-            "updatedAt": {"dataType":"datetime","required":true},
             "name": {"dataType":"string","required":true},
-            "accountId": {"ref":"ObjectId","required":true},
-            "customerId": {"ref":"ObjectId","required":true},
+            "accountId": {"dataType":"string","required":true},
+            "customerId": {"dataType":"string","required":true},
             "priceBreakdown": {"dataType":"double","required":true},
-            "products": {"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"units":{"dataType":"double","required":true},"price":{"dataType":"double","required":true},"id":{"ref":"ObjectId","required":true}}},"required":true},
+            "products": {"dataType":"array","array":{"dataType":"nestedObjectLiteral","nestedProperties":{"units":{"dataType":"double","required":true},"price":{"dataType":"double","required":true},"id":{"dataType":"string","required":true}}},"required":true},
             "billingPeriod": {"dataType":"nestedObjectLiteral","nestedProperties":{"endTime":{"dataType":"datetime","required":true},"startTime":{"dataType":"datetime","required":true}},"required":true},
         },
         "additionalProperties": true,

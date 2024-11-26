@@ -1,8 +1,10 @@
-import { Controller, Route, Get, Path, Example, Tags, SuccessResponse, OperationId,  } from 'tsoa'
+import { Controller, Route, Get, Path, Example, Tags, SuccessResponse, OperationId, Response, } from 'tsoa'
 import { CalculationService } from '../services/calculation.service'
-import { Invoice } from '../models'
+import { APIInvoice } from '../API'
 
 @Route('/invoices')
+@Tags('Invoices')
+
 export class InvoicesController extends Controller {
   private calculationService: CalculationService
 
@@ -13,9 +15,15 @@ export class InvoicesController extends Controller {
 
   @Get(':id/Calculate')
   @OperationId('Calculate Invoice')
-  @Tags('Invoices')
-  @SuccessResponse(200, 'Invoice total calculated', typeof Invoice)
-  public async calculate(@Path('id') id: string): Promise<Invoice | null> {
-    return this.calculationService.calculateInvoiceTotal(id)
+  @SuccessResponse(200, 'Invoice total calculated')
+  @Response(404, 'Invoice not found')
+  public async calculate(@Path('id') id: string): Promise<APIInvoice | null> {
+    const invoice = await this.calculationService.calculateInvoiceTotal(id)
+
+    if (!invoice) {
+      return null
+    }
+
+    return APIInvoice.fromEntity(invoice)
   }
 }
