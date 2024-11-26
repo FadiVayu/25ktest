@@ -10,9 +10,7 @@
     "lint": "eslint . --ext .ts --fix",
     "tsoa": "tsoa spec-and-routes",
     "test": "mocha --require @swc/register --exit 'tests/**/*.spec.ts'",
-    "send": "ts-node ./test.ts",
-    "playground": "ts-node ./playground.ts",
-    "seed": "ts-node ./seed.ts"
+    "send": "ts-node ./send.ts"
   },
   "keywords": [],
   "author": "",
