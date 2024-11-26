@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 import { AggregationMethods, CreateCustomerPayload, CreateInvoicePayload, CreateProductPayload, Customer, Invoice, Product } from "../../src/models";
 import { BaseTestContext } from "./BaseTestContext";
-import { CustomersService, InvoicesService, MessageHandlerService, ProductsService } from "../../src/services";
+import { CalculationService, CustomersService, InvoicesService, MessageHandlerService, ProductsService } from "../../src/services";
 import { Redis } from "../../src/shared";
 import { config } from "../../src/config";
 
@@ -10,6 +10,7 @@ export class CalculationTestContext extends BaseTestContext {
   public productsService: ProductsService
   public messageHandlerService: MessageHandlerService
   public customersService: CustomersService
+  public calculationService: CalculationService
 
   public async setup() {
     await super.setup()
@@ -19,6 +20,7 @@ export class CalculationTestContext extends BaseTestContext {
     this.productsService = new ProductsService()
     this.customersService = new CustomersService()
     this.messageHandlerService = new MessageHandlerService()
+    this.calculationService = new CalculationService()
   }
 
   public async teardown() {

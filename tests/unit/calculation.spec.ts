@@ -150,7 +150,7 @@ describe('Calculation', () => {
 
         messagesLength = messages.length
 
-        await Promise.all(messages.map(m => context.messageHandlerService.handle(m)))
+        await context.messageHandlerService.handle(messages)
 
         insertedCount = await Mongo.events.countDocuments({
           customerId: customer._id,
@@ -158,7 +158,7 @@ describe('Calculation', () => {
           accountId: accountId
         })
 
-        await CalculationService.calculateInvoices();
+        await context.calculationService.calculateInvoiceTotal(invoice._id);
 
         invoiceAfterCalculation = await Mongo.invoices.findOne({
           _id: invoice._id
