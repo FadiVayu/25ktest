@@ -1,5 +1,5 @@
-import { APIError } from './apiError.model'
-import { MongoEntity } from './mongoEntity.model'
+import { APIError } from '../../api'
+import { MongoEntity } from '../../mongo'
 import { ObjectId } from 'mongodb'
 
 export class Invoice extends MongoEntity {

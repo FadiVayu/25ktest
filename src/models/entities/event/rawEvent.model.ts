@@ -1,4 +1,4 @@
-import { MongoEntity } from "./mongoEntity.model";
+import { MongoEntity } from "../../mongo";
 
 export class RawEvent extends MongoEntity{
   public eventName!: string;

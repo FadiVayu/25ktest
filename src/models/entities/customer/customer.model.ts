@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb'
-import { MongoEntity } from './mongoEntity.model'
+import { MongoEntity } from '../../mongo'
 import { uniq } from 'lodash'
 
 export class Customer extends MongoEntity {
@@ -21,7 +21,7 @@ export class Customer extends MongoEntity {
 
 export interface CreateCustomerPayload {
     name: string
-    accountId: ObjectId
+    accountId: string
     externalId: string
     metadata?: Record<string, any>
     aliases?: string[]

@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb'
-import { MongoEntity } from './mongoEntity.model'
+import { MongoEntity } from '../../mongo'
 
 export class Event extends MongoEntity {
   public name!: string

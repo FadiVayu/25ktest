@@ -1,8 +1,7 @@
-import { Controller, Route, Get, Path, Example, Tags, SuccessResponse, OperationId, Response, Post, Put, Delete, } from 'tsoa'
+import { Controller, Route, Get, Path, Tags, SuccessResponse, OperationId, Response, Post, Put, Delete, Body, } from 'tsoa'
 import { CalculationService } from '../services/calculation.service'
-import { APIInvoice } from '../API'
 import { InvoicesService } from '../services'
-import { CreateInvoicePayload, Invoice, UpdateInvoicePayload, QueryPayload, QueryResult } from '../models'
+import { APIInvoice, CreateInvoicePayload, Invoice, UpdateInvoicePayload, QueryPayload, QueryResult, APIQueryPayload } from '../models'
 
 @Route('/invoices')
 @Tags('Invoices')
@@ -42,7 +41,7 @@ export class InvoicesController extends Controller {
   @OperationId('Create Invoice')
   @SuccessResponse(201, 'Invoice created')
   @Response(400, 'Invalid payload')
-  public async create(invoice: CreateInvoicePayload): Promise<APIInvoice> {
+  public async create(@Body() invoice: CreateInvoicePayload): Promise<APIInvoice> {
     const createdInvoice = await this.invoicesService.create(invoice)
 
     return APIInvoice.fromEntity(createdInvoice)
@@ -53,7 +52,7 @@ export class InvoicesController extends Controller {
   @SuccessResponse(200, 'Invoice updated')
   @Response(404, 'Invoice not found')
   @Response(400, 'Invalid payload')
-  public async update(@Path('id') id: string, invoice: UpdateInvoicePayload): Promise<APIInvoice> {
+  public async update(@Path('id') id: string, @Body() invoice: UpdateInvoicePayload): Promise<APIInvoice> {
     const updatedInvoice = await this.invoicesService.update(id, invoice)
 
     return APIInvoice.fromEntity(updatedInvoice)
@@ -70,20 +69,16 @@ export class InvoicesController extends Controller {
   @OperationId('Query Invoices')
   @SuccessResponse(200, 'Invoices found')
   @Response(400, 'Invalid query')
-  @Example({
-    accountId: '123',
-    customerId: '456',
-    startDate: '2021-01-01',
-    endDate: '2021-01-31'
-  })
-  public async query(payload: QueryPayload<Invoice>): Promise<QueryResult<APIInvoice>> {
-    const cursor = await this.invoicesService.query(payload)
+  public async query(@Body() payload: APIQueryPayload<APIInvoice>): Promise<QueryResult<APIInvoice>> {
+    const parseQuery = APIQueryPayload.toQuery<Invoice>(payload)
+
+    const cursor = await this.invoicesService.query(parseQuery)
 
     const items = await cursor.items();
 
     return {
       items: items.map(APIInvoice.fromEntity),
-      hasNext: await cursor.hasNext(),
+      hasMore: await cursor.hasNext(),
       totalCount: await cursor.totalCount()
     }
   }

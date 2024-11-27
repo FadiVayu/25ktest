@@ -18,7 +18,7 @@ describe('Calculation', () => {
     before(async () => {
       await context.setup()
       customer = await context.createCustomer({
-        accountId,
+        accountId: new ObjectId(accountId).toHexString(),
         aliases: ['ExternalId', 'Alias'],
         externalId: 'ExternalId'
       })

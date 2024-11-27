@@ -5,7 +5,7 @@ import { Mongo, Redis } from '../shared'
 export class CustomersService {
 
   public async create(customer: CreateCustomerPayload): Promise<string> {
-    const createdResult = await Mongo.customers.insertOne(new Customer(customer))
+    const createdResult = await Mongo.customers.insertOne(new Customer(customer as any))
 
     return createdResult.insertedId.toHexString()
   }

@@ -1,33 +1,16 @@
 import { ObjectId } from 'mongodb'
-import { MongoEntity } from './mongoEntity.model'
-
-type Pricing = {
-  tiers: {
-    from: number
-    to: number
-    price: number
-    chunkSize: number
-  }[]
-}
-
-export enum AggregationMethods {
-  SUM = 'sum',
-  AVERAGE = 'avg',
-  MAX = 'max',
-  MIN = 'min',
-  COUNT = 'count'
-}
-
-export interface Aggregation {
-  type: AggregationMethods
-  field?: string
-}
+import { MongoEntity } from '../../mongo'
+import { Aggregation } from './aggregation.model'
+import { Pricing } from './pricing.model'
+import { ProductRevision } from './productRevision.model'
 
 export class Product extends MongoEntity {
   public name!: string
+  public description?: string
   public accountId!: ObjectId
   public aggregation!: Aggregation
   public pricing!: Pricing
+  public revisions?: ProductRevision[]
 
   constructor(obj: Partial<Product>) {
     super()
@@ -41,4 +24,9 @@ export interface CreateProductPayload {
   accountId: ObjectId
   aggregation: Aggregation
   pricing: Pricing
+}
+
+export interface UpdateProductPayload {
+  name?: string
+  description?: string
 }

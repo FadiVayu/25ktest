@@ -80,16 +80,12 @@ export class InvoicesService {
     pageSize,
     sort
   }: QueryPayload<Invoice>): Promise<Cursor<Invoice>> {
-    const query = Mongo.invoices.find(filter ?? {})
+    const query = Mongo.invoices.find(filter ?? {}, { skip: page, limit: pageSize })
 
     if (sort) {
       query.sort(sort)
     }
-
-    if (page && pageSize) {
-      query.skip(page * pageSize).limit(pageSize)
-    }
-
+    
     return new Cursor<Invoice>(query, (data) => new Invoice(data))
   }
 }

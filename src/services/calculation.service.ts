@@ -1,5 +1,4 @@
 import { ObjectId } from 'mongodb'
-import { Redis } from '../shared'
 import { ProductsService } from './products.service'
 import { sumBy } from 'lodash'
 import { InvoicesService } from './invoices.service'
@@ -24,10 +23,15 @@ export class CalculationService {
     const productsIds = invoice.products.map((product) => product.id)
     const calculationPeriod = invoice.billingPeriod
 
-    const products = await this.productsService.getManyByIds(
-      invoice.accountId,
-      productsIds
-    )
+    const productsCusror = await this.productsService.query({
+      filter: {
+        accountId: invoice.accountId,
+        _id: { $in: productsIds }
+      }
+    })
+
+    const products = await productsCusror.items()
+
 
     if (!products || products.length !== productsIds.length) {
       throw new APIError('Invoice Products not found', 404)

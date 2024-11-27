@@ -1,9 +1,28 @@
 import { ObjectId } from "mongodb";
-import { CreateProductPayload, Product } from "../models";
+import { APIError, CreateProductPayload, Cursor, Product, ProductRevision, QueryPayload, UpdateProductPayload } from "../models";
 import { Mongo, Redis } from "../shared";
-import { parse } from "dotenv";
 
 export class ProductsService {
+    public async get(id: ObjectId | string): Promise<Product> {
+        const parsedId = new ObjectId(id)
+
+        const key = `products:${parsedId.toHexString()}`
+        const cached = await Redis.get<Product>(key, (data) => new Product(data))
+        if (cached) {
+            return cached
+        }
+
+        const result = await Mongo.products.findOne({
+            _id: parsedId
+        });
+
+        if (!result) {
+            throw new APIError('Product not found', 404)
+        }
+
+        await Redis.set(key, result)
+        return new Product(result);
+    }
 
     public async create(product: CreateProductPayload): Promise<string> {
         const createdResult = await Mongo.products.insertOne(new Product(product))
@@ -11,71 +30,75 @@ export class ProductsService {
         return createdResult.insertedId.toHexString()
     }
 
-    public async getByName(accountId: ObjectId | string, name: string): Promise<Product | null> {
-        const parsedAccountId = new ObjectId(accountId)
+    public async update(id: string | ObjectId, payload: UpdateProductPayload): Promise<Product> {
+        const parsedId = new ObjectId(id)
+        const key = `products:${parsedId.toHexString()}`
 
-        const key = `products:${parsedAccountId.toHexString()}.${name}`
-        const cached = await Redis.get<Product>(key, (data) => new Product(data))
-        if (cached) {
-            return cached
-        }
-
-        const result = await Mongo.products.findOne({
-            accountId: parsedAccountId,
-            name
-        });
+        const result = await Mongo.products.findOneAndUpdate(
+            { _id: parsedId },
+            { 
+                $set: payload
+             }
+        )
 
         if (!result) {
-            return null
+            throw new APIError('Product not found', 404)
         }
 
-        await Redis.set(key, result)
-        return new Product(result);
+        await Redis.invalidate(key)
+
+        return this.get(parsedId);
     }
 
-    public async getById(accountId: ObjectId | string, id: ObjectId | string): Promise<Product | null> {
-        const parsedAccountId = new ObjectId(accountId)
+    public async revision(id: string | ObjectId, payload: ProductRevision): Promise<Product> {
+        const parsedId = new ObjectId(id)
+        const key = `products:${parsedId.toHexString()}`
+
+        const result = await Mongo.products.findOneAndUpdate(
+            { _id: parsedId },
+            { 
+                $push: {
+                    revisions: payload
+                }
+            }
+        )
+
+        if (!result) {
+            throw new APIError('Product not found', 404)
+        }
+
+        await Redis.invalidate(key)
+
+        return this.get(parsedId);
+    }
+
+    public async delete(id: string | ObjectId): Promise<void> {
         const parsedId = new ObjectId(id)
 
-        const key = `products:${parsedAccountId.toHexString()}.${parsedId.toHexString()}`
-        const cached = await Redis.get<Product>(key, (data) => new Product(data))
-        if (cached) {
-            return cached
+        const key = `products:${parsedId.toHexString()}`
+        const result = await Mongo.products.deleteOne({ _id: parsedId })
+
+        if (result.deletedCount === 0) {
+            return // do not indicate errors to not expose internal state
         }
 
-        const result = await Mongo.products.findOne({
-            accountId: parsedAccountId,
-            _id: parsedId
-        });
-
-        if (!result) {
-            return null
-        }
-
-        await Redis.set(key, result)
-        return new Product(result);
+        await Redis.invalidate(key)
     }
 
-    public async getManyByIds(accountId: ObjectId | string, ids: (ObjectId | string)[]): Promise<Product[] | null> {
-        const parsedAccountId = new ObjectId(accountId)
-        const parsedIds = ids.map(id => new ObjectId(id))
+    public async query({ filter, page, pageSize, sort }: QueryPayload<Product>): Promise<Cursor<Product>> {
+        const query = Mongo.products.find(filter ?? {})
 
-        const key = `products:${parsedAccountId.toHexString()}.${parsedIds.map(id => id.toHexString()).join(',')}`
-        const cached = await Redis.get<Product[]>(key, (data) => data.map(product => new Product(product ?? {})));
-        if (cached) {
-            return cached
+        if (page) {
+            query.skip(page)
+        }
+        if (pageSize) {
+            query.limit(pageSize)
         }
 
-        const result = await Mongo.products.find({
-            accountId: parsedAccountId,
-            _id: { $in: parsedIds }
-        }).toArray();
-
-        if (!result) {
-            return null;
+        if (sort) {
+            query.sort(sort)
         }
 
-        await Redis.set(key, result)
-        return result.map(product => new Product(product));
+        return new Cursor<Product>(query, (data) => new Product(data))
     }
 }

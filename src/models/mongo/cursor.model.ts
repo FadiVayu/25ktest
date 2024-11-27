@@ -2,26 +2,11 @@ import { FindCursor, AggregationCursor } from 'mongodb';
 
 export type MongoCursor = FindCursor | AggregationCursor;
 
-export const MAX_PAGE_SIZE = 100;
-
-export interface QueryPayload<T> {
-  page?: number;
-  pageSize?: number;
-  sort?: Partial<Record<keyof T, 1 | -1>>;
-  filter?: Partial<T>;
-}
-
-export interface QueryResult<T> {
-  items: T[];
-  totalCount: number;
-  hasNext: boolean;
-}
-
 export class Cursor<T> {
-  constructor(private _mongoCursor: MongoCursor, private _materialize: (obj: any) => T) {}
+  constructor(private _mongoCursor: MongoCursor, private _materialize: (obj: any) => T) { }
 
   public async items(): Promise<T[]> {
-    const items =  this._mongoCursor.toArray();
+    const items = this._mongoCursor.toArray();
 
     if (this._materialize) {
       return items.then((items) => items.map(this._materialize));

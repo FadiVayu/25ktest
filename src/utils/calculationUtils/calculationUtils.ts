@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb';
-import { AggregationMethods, Event, Product } from '../../models'
+import { Aggregation, AggregationMethods, Condition, Criterion, CriterionOperators, Product } from '../../models'
 import { InvoiceProduct } from './calculationUtils.types';
 import { Mongo } from '../../shared';
 
@@ -13,15 +13,13 @@ export class CalculationUtils {
 
     if (!pricing) { return { id: product._id, price: 0, units: 0 } }
 
-    const aggregationMethod = product.aggregation.type
-    const aggregationFilter = product.aggregation.field
+    const aggregationFilter = product.aggregation
 
     const eventsTotal = await this.readEventsTotals(
       customerId,
       period,
       product._id,
-      aggregationMethod,
-      aggregationFilter
+      product.aggregation
     )
 
     let remainingValue = eventsTotal ?? 0
@@ -48,11 +46,10 @@ export class CalculationUtils {
     customerId: ObjectId,
     period: { startTime: Date; endTime: Date },
     productId: ObjectId,
-    aggregationMethod: string,
-    aggregationFilter?: string
+    aggregation: Aggregation
   ): Promise<number> {
 
-    const aggregationOperation = this.getMongoAggregationOperation(aggregationMethod, aggregationFilter)
+    const aggregationOperation = this.getMongoAggregationOperation(aggregation)
     const pipeline = [
       {
         $match: {
@@ -71,11 +68,28 @@ export class CalculationUtils {
     return result && result.length ? result[0].total ?? 0 : 0
   }
 
-  private static getMongoAggregationOperation(aggregationMethod: string, field?: string) {
-    switch (aggregationMethod) {
+  private static getMongoAggregationOperation(aggregation: Aggregation) {
+    const type = aggregation.type
+    const field = aggregation.field
+    const mongoConditions = this.extractMongoAggregationConditions(aggregation.filter)
+
+    switch (type) {
       case AggregationMethods.COUNT:
         return [
-          { $count: "count" },
+          {
+            $group: {
+              _id: null,
+              count: {
+                $sum: {
+                  $cond: {
+                    if: { $and: mongoConditions && mongoConditions.$or.length ? mongoConditions.$or : [1] },
+                    then: 1,
+                    else: 0
+                  }
+                }
+              }
+            }
+          },
           { $project: { total: "$count" } }
         ]
       case AggregationMethods.SUM:
@@ -83,8 +97,16 @@ export class CalculationUtils {
           {
             $group: {
               _id: null,
-              tempSum: { $sum: { $ifNull: [`$metadata.${field}`, 0] } },
-            },
+              tempSum: {
+                $sum: {
+                  $cond: {
+                    if: { $and: mongoConditions && mongoConditions.$or.length ? mongoConditions.$or : [1] },
+                    then: { $ifNull: [`$metadata.${field}`, 0] },
+                    else: 0
+                  }
+                }
+              }
+            }
           },
           {
             $project: {
@@ -97,8 +119,16 @@ export class CalculationUtils {
           {
             $group: {
               _id: null,
-              tempMin: { $min: { $ifNull: [`$metadata.${field}`, 0] } },
-            },
+              tempMin: {
+                $min: {
+                  $cond: {
+                    if: { $and: mongoConditions && mongoConditions.$or.length ? mongoConditions.$or : [1] },
+                    then: { $ifNull: [`$metadata.${field}`, 0] },
+                    else: null
+                  }
+                }
+              }
+            }
           },
           {
             $project: {
@@ -111,8 +141,16 @@ export class CalculationUtils {
           {
             $group: {
               _id: null,
-              tempMax: { $max: { $ifNull: [`$metadata.${field}`, 0] } },
-            },
+              tempMax: {
+                $max: {
+                  $cond: {
+                    if: { $and: mongoConditions && mongoConditions.$or.length ? mongoConditions.$or : [1] },
+                    then: { $ifNull: [`$metadata.${field}`, 0] },
+                    else: null
+                  }
+                }
+              }
+            }
           },
           {
             $project: {
@@ -125,7 +163,15 @@ export class CalculationUtils {
           {
             $group: {
               _id: null,
-              tempAvg: { $avg: { $ifNull: [`$metadata.${field}`, 0] } },
+              tempAvg: {
+                $avg: {
+                  $cond: {
+                    if: { $and: mongoConditions && mongoConditions.$or.length ? mongoConditions.$or : [1] },
+                    then: { $ifNull: [`$metadata.${field}`, 0] },
+                    else: null
+                  }
+                }
+              },
             },
           },
           {
@@ -136,6 +182,47 @@ export class CalculationUtils {
         ]
       default:
         throw new Error('Unsupported aggregation method')
+    }
+  }
+
+  private static extractMongoAggregationConditions(conditions?: Condition[]) {
+    if (!conditions || !conditions.length) {
+      return undefined
+    }
+
+    return conditions.reduce<any>((acc, { criterions }) => {
+      const mongoConditions = criterions.map((criterion) => ({ $and: this.extractMongoAggregationCriterion(criterion) }))
+      if (!mongoConditions.length) {
+        return acc
+      }
+
+      acc.$or.push(mongoConditions)
+      return acc;
+    }, { $or: [] })
+  }
+
+  private static extractMongoAggregationCriterion(criterion: Criterion) {
+    switch (criterion.operator) {
+      case CriterionOperators.Equals:
+        return { $eq: [`$metadata.${criterion.field}`, criterion.value] }
+      case CriterionOperators.NotEquals:
+        return { $ne: [`$metadata.${criterion.field}`, criterion.value] }
+      case CriterionOperators.Has:
+        return { $gt: [`$metadata.${criterion.field}`, 0] }
+      case CriterionOperators.In:
+        return { $in: [`$metadata.${criterion.field}`, criterion.value] }
+      case CriterionOperators.Contains:
+        return { $regexMatch: { input: `$metadata.${criterion.field}`, regex: criterion.value } }
+      case CriterionOperators.NotContain:
+        return { $not: { $regexMatch: { input: `$metadata.${criterion.field}`, regex: criterion.value } } }
+      case CriterionOperators.LargerThan:
+        return { $gt: [`$metadata.${criterion.field}`, criterion.value] }
+      case CriterionOperators.LowerThan:
+        return { $lt: [`$metadata.${criterion.field}`, criterion.value] }
+      case CriterionOperators.LowerEqualTo:
+        return { $lte: [`$metadata.${criterion.field}`, criterion.value] }
+      case CriterionOperators.LargerEqualTo:
+        return { $gte: [`$metadata.${criterion.field}`, criterion.value] }
     }
   }
 
