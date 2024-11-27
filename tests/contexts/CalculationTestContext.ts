@@ -42,7 +42,7 @@ export class CalculationTestContext extends BaseTestContext {
   }
 
 
-  public async createInvoice(invoice: Partial<CreateInvoicePayload>): Promise<Invoice> {
+  public async createInvoice(invoice: Partial<Invoice>): Promise<Invoice> {
     const dummyInvoice = Object.assign<Partial<Invoice>, any>({
       priceBreakdown: 0,
       products: [],
@@ -62,7 +62,7 @@ export class CalculationTestContext extends BaseTestContext {
     return new Invoice(dummyInvoice)
   }
 
-  public async createInvoices(invoices: Partial<CreateInvoicePayload>[]): Promise<Invoice[]> {
+  public async createInvoices(invoices: Partial<Invoice>[]): Promise<Invoice[]> {
     return Promise.all(invoices.map(i => this.createInvoice(i)))
   }
 
