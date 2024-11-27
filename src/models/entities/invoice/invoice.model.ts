@@ -19,10 +19,12 @@ export class Invoice extends MongoEntity {
 
   constructor(obj: Partial<Invoice>) {
     super()
-    this.assign(Invoice.validate(obj))
+    Object.assign(this, Invoice.validate(obj))
   }
 
   public static validate(obj: Partial<Invoice>) {
+    obj = super.validate(obj)
+
     if (!obj.name) {
       throw new APIError('Name is required', 400)
     }
@@ -32,9 +34,6 @@ export class Invoice extends MongoEntity {
     if (!obj.customerId) {
       throw new APIError('Customer ID is required', 400)
     }
-    if (!obj.priceBreakdown) {
-      throw new APIError('Price Breakdown is required', 400)
-    }
     if (!obj.products) {
       throw new APIError('Products are required', 400)
     }
@@ -42,10 +41,21 @@ export class Invoice extends MongoEntity {
       throw new APIError('Billing Period is required', 400)
     }
 
+    obj.priceBreakdown = obj.priceBreakdown ?? 0
+
+    obj.accountId = new ObjectId(obj.accountId)
+    obj.customerId = new ObjectId(obj.customerId)
+
     obj.billingPeriod = {
       startTime: new Date(obj.billingPeriod.startTime),
       endTime: new Date(obj.billingPeriod.endTime)
     }
+
+    obj.products = obj.products.map(product => ({
+      id: new ObjectId(product.id),
+      price: product.price,
+      units: product.units
+    }))
 
     return obj;
   }
@@ -61,9 +71,6 @@ export class Invoice extends MongoEntity {
     }
     if (!obj.customerId) {
       throw new APIError('Customer ID is required', 400)
-    }
-    if (!obj.priceBreakdown) {
-      throw new APIError('Price Breakdown is required', 400)
     }
     if (!obj.products) {
       throw new APIError('Products are required', 400)
@@ -116,8 +123,6 @@ export interface CreateInvoicePayload {
   accountId: string
   /** Customer ID */
   customerId: string
-  /** Price Breakdown */
-  priceBreakdown: number
   /** Products */
   products: {
     /** Product ID */

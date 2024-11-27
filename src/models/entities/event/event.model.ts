@@ -12,11 +12,7 @@ export class Event extends MongoEntity {
 
   constructor(obj: Partial<Event>) {
     super()
-    this.assign(obj)
-
-    this.accountId = new ObjectId(obj.accountId)
-    this.customerId = new ObjectId(obj.customerId)
-    this.productId = new ObjectId(obj.productId)
+    Object.assign(this, Event.validate(obj))
   }
 }
 

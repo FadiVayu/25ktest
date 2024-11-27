@@ -57,6 +57,12 @@ export class CalculationTestContext extends BaseTestContext {
       }
     }, invoice)
 
+    dummyInvoice.products = dummyInvoice.products.map(p => ({
+      id: new ObjectId(p.id).toHexString(),
+      price: p.price,
+      units: p.units
+    }))
+
     await this.invoicesService.create(dummyInvoice);
     return new Invoice(dummyInvoice)
   }

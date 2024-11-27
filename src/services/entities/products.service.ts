@@ -1,6 +1,6 @@
 import { ObjectId } from "mongodb";
-import { APIError, CreateProductPayload, Cursor, Product, ProductRevision, QueryPayload, ReviseProductPayload, UpdateProductPayload } from "../models";
-import { Mongo, Redis } from "../shared";
+import { APIError, CreateProductPayload, Cursor, Product, ProductRevision, QueryPayload, ReviseProductPayload, UpdateProductPayload } from "../../models";
+import { Mongo, Redis } from "../../shared";
 
 export class ProductsService {
     public async get(id: ObjectId | string): Promise<Product> {

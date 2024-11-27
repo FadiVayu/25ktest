@@ -1,6 +1,6 @@
 import { ObjectId } from 'mongodb'
-import { APIError, CreateInvoicePayload, Cursor, Invoice, QueryPayload, UpdateInvoicePayload } from '../models'
-import { Mongo, Redis } from '../shared'
+import { APIError, CreateInvoicePayload, Cursor, Invoice, QueryPayload, UpdateInvoicePayload } from '../../models'
+import { Mongo, Redis } from '../../shared'
 
 export class InvoicesService {
   public async get(id: ObjectId | string): Promise<Invoice> {

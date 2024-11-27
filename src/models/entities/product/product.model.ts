@@ -15,9 +15,31 @@ export class Product extends MongoEntity {
 
   constructor(obj: Partial<Product>) {
     super()
-    this.assign(obj)
-    this.accountId = new ObjectId(this.accountId)
-  }  
+    Object.assign(this, Product.validate(obj))
+  }
+
+  public static validate(obj: Partial<Product>) {
+    obj = super.validate(obj)
+
+    if (!obj.name) {
+      throw new APIError('Name is required', 400)
+    }
+    if (!obj.accountId) {
+      throw new APIError('Account ID is required', 400)
+    }
+    if (!obj.aggregation) {
+      throw new APIError('Price Breakdown is required', 400)
+    }
+    if (!obj.pricing) {
+      throw new APIError('Products are required', 400)
+    }
+
+    obj.accountId = new ObjectId(obj.accountId)
+    obj.revisions = []
+
+    return obj
+  }
+
   
   public static validateCreate(obj: CreateProductPayload) {
     const validated: Partial<Product> = {}

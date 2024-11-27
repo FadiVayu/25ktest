@@ -1,5 +1,5 @@
-import { CreateEventPayload, Event } from '../models'
-import { Mongo } from '../shared'
+import { CreateEventPayload, Event } from '../../models'
+import { Mongo } from '../../shared'
 
 export class EventsService {
   public async getByRef(ref: string): Promise<Event | null> {

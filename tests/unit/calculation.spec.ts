@@ -2,7 +2,6 @@ import { ObjectId } from "mongodb"
 import { CalculationTestContext } from "../contexts/CalculationTestContext"
 import { AggregationMethods, Customer, IngestedEvent, Invoice, Product } from "../../src/models"
 import { Mongo } from "../../src/shared"
-import { CalculationService } from "../../src/services"
 import { expect } from 'chai';
 
 describe('Calculation', () => {
@@ -24,7 +23,7 @@ describe('Calculation', () => {
       })
 
       product = await context.createProduct({
-        accountId,
+        accountId: accountId.toHexString(),
         pricing: {
           tiers: [
             {

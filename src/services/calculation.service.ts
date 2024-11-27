@@ -1,7 +1,6 @@
 import { ObjectId } from 'mongodb'
-import { ProductsService } from './products.service'
 import { sumBy } from 'lodash'
-import { InvoicesService } from './invoices.service'
+import { InvoicesService, ProductsService } from './entities'
 import { CalculationUtils } from '../utils'
 import { APIError, Invoice } from '../models'
 
