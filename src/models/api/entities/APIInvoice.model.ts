@@ -1,14 +1,28 @@
-import { Invoice } from "../entities"
+import { Invoice } from "../../entities"
 
 
 export class APIInvoice {
-  /** ID */
+  /** 
+   * ID 
+   * @isString
+   */
   public id!: string
-  /** Name */
+  /** 
+   * Name 
+   * @isString
+   */
   public name!: string
-  /** Account ID */
+  /** 
+   * Account ID 
+   * 
+   * @isString
+   */
   public accountId!: string
-  /** Customer ID */
+  /** 
+   * Customer ID 
+   * 
+   * @isString
+   */
   public customerId!: string
   /** 
    * Price Breakdown 
@@ -43,7 +57,15 @@ export class APIInvoice {
      */
     endTime: Date
   }
+  /** 
+   * Created At 
+   * @isDate
+   */
   public createdAt!: Date
+  /** 
+   * Updated At 
+   * @isDate
+   */
   public updatedAt!: Date
 
   public static fromEntity(entity: Invoice): APIInvoice {

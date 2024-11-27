@@ -92,30 +92,17 @@ export class Invoice extends MongoEntity {
   public static validateUpdate(obj: UpdateInvoicePayload) {
     const validated: Partial<Invoice> = {}
 
-    if (!obj.name) {
-      throw new APIError('Name is required', 400)
-    }
-    if (!obj.customerId) {
-      throw new APIError('Customer ID is required', 400)
-    }
-    if (!obj.products) {
-      throw new APIError('Products are required', 400)
-    }
-    if (!obj.billingPeriod) {
-      throw new APIError('Billing Period is required', 400)
-    }
-
     Object.assign(validated, obj)
 
-    validated.customerId = new ObjectId(obj.customerId)
-
-    validated.billingPeriod = {
-      startTime: new Date(validated.billingPeriod!.startTime),
-      endTime: new Date(validated.billingPeriod!.endTime)
+    if (validated.customerId) {
+      validated.customerId = new ObjectId(obj.customerId)
     }
 
-    if (validated.products!.length === 0) {
-      throw new APIError('At least one Product is required', 400)
+    if (validated.billingPeriod) {
+      validated.billingPeriod = {
+        startTime: new Date(validated.billingPeriod.startTime),
+        endTime: new Date(validated.billingPeriod.endTime)
+      }
     }
 
     return validated

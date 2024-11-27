@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb'
-import { CreateCustomerPayload, Customer } from '../models'
+import { CreateCustomerPayload, Cursor, Customer, QueryPayload } from '../models'
 import { Mongo, Redis } from '../shared'
 
 export class CustomersService {
@@ -11,28 +11,18 @@ export class CustomersService {
   }
 
 
-  public async getByAlias(
-    accountId: ObjectId | string,
-    customerAlias: string
-  ): Promise<Customer | null> {
-    const parsedAccountId = new ObjectId(accountId)
+  public async query({
+    filter,
+    page,
+    pageSize,
+    sort
+  }: QueryPayload<Customer>): Promise<Cursor<Customer>> {
+    const query = Mongo.customers.find(filter ?? {}, { skip: page, limit: pageSize })
+
+    if (sort) {
+      query.sort(sort)
+    }
     
-    const key = `customers:${parsedAccountId.toHexString()}.${customerAlias}`
-    const cached = await Redis.get<Customer>(key, (data) => new Customer(data))
-    if (cached) {
-      return cached
-    }
-
-    const result = await Mongo.customers.findOne({
-      accountId: parsedAccountId,
-      aliases: { $in: [customerAlias] }
-    })
-
-    if (!result) {
-      return null
-    }
-
-    await Redis.set(key, result)
-    return new Customer(result)
+    return new Cursor<Customer>(query, (data) => new Customer(data))
   }
 }

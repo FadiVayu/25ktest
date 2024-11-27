@@ -1,11 +1,9 @@
 import { Controller, Route, Get, Path, Tags, SuccessResponse, OperationId, Response, Post, Put, Delete, Body, } from 'tsoa'
-import { CalculationService } from '../services/calculation.service'
-import { InvoicesService } from '../services'
-import { APIInvoice, CreateInvoicePayload, Invoice, UpdateInvoicePayload, QueryPayload, QueryResult, APIQueryPayload } from '../models'
+import { InvoicesService, CalculationService } from '../../services'
+import { APIInvoice, CreateInvoicePayload, Invoice, UpdateInvoicePayload, QueryPayload, QueryResult, APIQueryPayload } from '../../models'
 
 @Route('/invoices')
 @Tags('Invoices')
-
 export class InvoicesController extends Controller {
   private calculationService: CalculationService
   private invoicesService: InvoicesService

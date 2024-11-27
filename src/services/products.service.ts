@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { APIError, CreateProductPayload, Cursor, Product, ProductRevision, QueryPayload, UpdateProductPayload } from "../models";
+import { APIError, CreateProductPayload, Cursor, Product, ProductRevision, QueryPayload, ReviseProductPayload, UpdateProductPayload } from "../models";
 import { Mongo, Redis } from "../shared";
 
 export class ProductsService {
@@ -24,21 +24,25 @@ export class ProductsService {
         return new Product(result);
     }
 
-    public async create(product: CreateProductPayload): Promise<string> {
-        const createdResult = await Mongo.products.insertOne(new Product(product))
+    public async create(product: CreateProductPayload): Promise<Product> {
+        const validatedPayload = Product.validateCreate(product)
+        const newProduct = new Product(validatedPayload)
 
-        return createdResult.insertedId.toHexString()
+        const createdResult = await Mongo.products.insertOne(newProduct)
+
+        return this.get(createdResult.insertedId)
     }
 
     public async update(id: string | ObjectId, payload: UpdateProductPayload): Promise<Product> {
         const parsedId = new ObjectId(id)
+        const validatedPayload = Product.validateUpdate(payload)
         const key = `products:${parsedId.toHexString()}`
 
         const result = await Mongo.products.findOneAndUpdate(
             { _id: parsedId },
-            { 
-                $set: payload
-             }
+            {
+                $set: validatedPayload
+            }
         )
 
         if (!result) {
@@ -50,15 +54,15 @@ export class ProductsService {
         return this.get(parsedId);
     }
 
-    public async revision(id: string | ObjectId, payload: ProductRevision): Promise<Product> {
+    public async revise(id: string | ObjectId, payload: ReviseProductPayload): Promise<Product> {
         const parsedId = new ObjectId(id)
         const key = `products:${parsedId.toHexString()}`
 
         const result = await Mongo.products.findOneAndUpdate(
             { _id: parsedId },
-            { 
+            {
                 $push: {
-                    revisions: payload
+                    revisions: Object.assign({ revisionId: new ObjectId() }, payload)
                 }
             }
         )

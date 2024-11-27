@@ -1,5 +1,5 @@
 import { ObjectId } from "mongodb";
-import { AggregationMethods, CreateCustomerPayload, CreateInvoicePayload, CreateProductPayload, Customer, Invoice, Product } from "../../src/models";
+import { AggregationMethods, CreateCustomerPayload, CreateProductPayload, Customer, Invoice, Product } from "../../src/models";
 import { BaseTestContext } from "./BaseTestContext";
 import { CalculationService, CustomersService, InvoicesService, MessageHandlerService, ProductsService } from "../../src/services";
 import { Redis } from "../../src/shared";
@@ -37,8 +37,7 @@ export class CalculationTestContext extends BaseTestContext {
       name: 'Test Customer - ' + Date.now()
     }, customer)
 
-    await this.customersService.create(dummyCustomer);
-    return new Customer(dummyCustomer)
+    return await this.customersService.create(dummyCustomer);
   }
 
 
