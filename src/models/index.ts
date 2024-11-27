@@ -5,3 +5,4 @@ export * from './invoice.model';
 export * from './product.model';
 export * from './apiError.model';
 export * from './rawEvent.model';
+export * from './Cursor.model';

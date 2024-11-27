@@ -1,5 +1,5 @@
 import { ObjectId } from 'mongodb'
-import { APIError, CreateInvoicePayload, Invoice, UpdateInvoicePayload } from '../models'
+import { APIError, CreateInvoicePayload, Cursor, Invoice, QueryPayload, UpdateInvoicePayload } from '../models'
 import { Mongo, Redis } from '../shared'
 
 export class InvoicesService {
@@ -72,5 +72,24 @@ export class InvoicesService {
     }
 
     await Redis.invalidate(key)
+  }
+
+  public async query({
+    filter,
+    page,
+    pageSize,
+    sort
+  }: QueryPayload<Invoice>): Promise<Cursor<Invoice>> {
+    const query = Mongo.invoices.find(filter ?? {})
+
+    if (sort) {
+      query.sort(sort)
+    }
+
+    if (page && pageSize) {
+      query.skip(page * pageSize).limit(pageSize)
+    }
+
+    return new Cursor<Invoice>(query, (data) => new Invoice(data))
   }
 }

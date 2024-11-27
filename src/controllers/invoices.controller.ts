@@ -2,7 +2,7 @@ import { Controller, Route, Get, Path, Example, Tags, SuccessResponse, Operation
 import { CalculationService } from '../services/calculation.service'
 import { APIInvoice } from '../API'
 import { InvoicesService } from '../services'
-import { CreateInvoicePayload, UpdateInvoicePayload } from '../models'
+import { CreateInvoicePayload, Invoice, UpdateInvoicePayload, QueryPayload, QueryResult } from '../models'
 
 @Route('/invoices')
 @Tags('Invoices')
@@ -64,6 +64,28 @@ export class InvoicesController extends Controller {
   @SuccessResponse(204, 'Invoice deleted')
   public async delete(@Path('id') id: string): Promise<void> {
     await this.invoicesService.delete(id)
+  }
+
+  @Post('query')
+  @OperationId('Query Invoices')
+  @SuccessResponse(200, 'Invoices found')
+  @Response(400, 'Invalid query')
+  @Example({
+    accountId: '123',
+    customerId: '456',
+    startDate: '2021-01-01',
+    endDate: '2021-01-31'
+  })
+  public async query(payload: QueryPayload<Invoice>): Promise<QueryResult<APIInvoice>> {
+    const cursor = await this.invoicesService.query(payload)
+
+    const items = await cursor.items();
+
+    return {
+      items: items.map(APIInvoice.fromEntity),
+      hasNext: await cursor.hasNext(),
+      totalCount: await cursor.totalCount()
+    }
   }
 
 }
